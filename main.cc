@@ -8,7 +8,6 @@
 #include "log.h"
 #include "util.h"
 
-
 int main(int argc, char** argv)
 {
     printf("1======================\n");
@@ -41,16 +40,27 @@ int main(int argc, char** argv)
     LOG_FATAL(logger, "Hello threadId=" + std::to_string(trycle::GetThreadId()));
 
     printf("----------------------\n");
+    printf("TEST_LOG_FMT_LOGGER:\n");
+    LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::toString Exception | %s | convert %s to string.",
+                  "a1111", "b22222");
+
+    printf("----------------------\n");
     printf("TEST_loggerManager:\n");
 
     // trycle::LoggerManager->
     auto test = trycle::LoggerManager::GetSingleton()->getLogger("test");
+    // trycle::LoggerManager->
     LOG_DEBUG(test, "trycle::LoggerManager-> Hello 11111111111");
 
     printf("----------------------\n");
+    printf("TEST_Config:\n");
 
-    LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::toString Exception | %s | convert %s to string.\n",
-                  "a1111", "b22222");
+    trycle::ConfigVar<int>::ptr var1 = trycle::Config::lookUp("test.k.var1", (int)111, "var1 is 111");
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s=%s", var1->get_var_name().c_str(), var1->toString().c_str());
+
+    trycle::ConfigVar<std::string>::ptr var2 = trycle::Config::lookUp("test.k.var2", std::string("aaa"), "var2 is aaa");
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s=%s", var2->get_var_name().c_str(), var2->toString().c_str());
+
 
     printf("----------------------\n");
 

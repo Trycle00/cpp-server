@@ -8,10 +8,10 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": false,
-      "cwd": "/home/try/cpp/server",
-      "program": "/home/try/cpp/server/build/Debug/outDebug",
+      "cwd": "${fileDirname}",
+      "program": "/mnt/host_d/workdata/local/cpp/server/main",
       "MIMode": "gdb",
-      "miDebuggerPath": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",

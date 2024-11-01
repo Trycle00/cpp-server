@@ -297,6 +297,8 @@ std::string LogFormatter::format(LogEvent::ptr event)
     {
         it->format(str, event);
     }
+    //str << "\n";
+    // std::string ss = str.str();
     return str.str();
 }
 
@@ -380,12 +382,12 @@ void __LoggerManager::init()
     // m_logger_map.insert(std::make_pair<std::string, Logger::ptr>(logger_name, logger));
     Logger::ptr logger;
     m_logger_map.insert({logger_name, logger});
-    
+
     Logger::ptr loggerx;
     m_logger_map.insert({logger_name, loggerx});
 }
 
-Logger::ptr __LoggerManager::getLogger(const std::string logger_name) 
+Logger::ptr __LoggerManager::getLogger(const std::string logger_name)
 {
     auto itor = m_logger_map.find(logger_name);
     if (itor != m_logger_map.end())
@@ -395,7 +397,7 @@ Logger::ptr __LoggerManager::getLogger(const std::string logger_name)
     const Logger::ptr logger = std::make_shared<Logger>(logger_name, m_root->getLevel(), m_root->getLogFormater());
     logger->setLogAppenders(m_root->getLogAppenders());
 
-     m_logger_map.insert({logger_name, logger});
+    m_logger_map.insert({logger_name, logger});
 
     return logger;
 }

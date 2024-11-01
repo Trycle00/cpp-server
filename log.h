@@ -34,35 +34,10 @@
         const int written = asprintf(&dyn_buf, format, argv); \
         if (written != -1)                                    \
         {                                                     \
-            LOG_LEVEL(logger, level, dyn_buf);                 \
+            LOG_LEVEL(logger, level, dyn_buf);                \
             free(dyn_buf);                                    \
         }                                                     \
     }
-
-// #define LOG_FMT_LEVEL(logger, level, format, argv...)                \
-//     {                                                                \
-//         char* dyn_buf     = nullptr;                                 \
-//         const int written = asprintf(&dyn_buf, format, argv);        \
-//         if (written != -1)                                           \
-//         {                                                            \
-//             LOG_LEVEL(Logger, level, std::string(dyn_buf, written)); \
-//             free(dyn_buf);                                           \
-//         }                                                            \
-//     }
-// #define LOG_FMT_LEVEL(logger, level, format, ...) \
-//     {                                             \
-//         char* b = nullptr;                        \
-//         va_list arglist;                          \
-//         va_start(arglist, format);                \
-//         vprintf(format, arglist);                 \
-//         va_end(argl ist);                         \
-//         // int l   = vsprintf(format, argv);            \
-//         // if (l != -1)                                     \
-//         // {                                                \
-//         //     LOG_LEVEL(logger, level, std::string(b, l)); \
-//         //     free(b);                                     \
-//         // }                                                \
-//     }
 
 #define LOG_FMT_DEBUG(logger, format, argv...) LOG_FMT_LEVEL(logger, trycle::LogLevel::DEBUG, format, argv)
 #define LOG_FMT_INFO(logger, format, argv...) LOG_FMT_LEVEL(logger, trycle::LogLevel::INFO, format, argv)

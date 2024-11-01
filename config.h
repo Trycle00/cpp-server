@@ -1,6 +1,7 @@
 #ifndef TRY_CONFIG_H
 #define TRY_CONFIG_H
 
+#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 #include "log.h"
@@ -21,8 +22,8 @@ public:
     {
     }
 
-    virtual std::string toString() const      = 0;
-    virtual bool fromString(std::string& str) = 0;
+    virtual std::string toString() const            = 0;
+    virtual bool fromString(const std::string& str) = 0;
 
     std::string get_var_name() const
     {
@@ -34,15 +35,16 @@ protected:
     std::string m_var_description;
 };
 
-template <typename T>
+template <class T>
 class ConfigVar : public ConfigVarBase
 {
+    // friend std::ostream& operator<< (std::ostream&out, const ConfigVar<T> operand);
 public:
     typedef std::shared_ptr<ConfigVar<T>> ptr;
 
-    ConfigVar(const std::string& name, T& var_val)
-        : m_val(var_val),
-          ConfigVarBase(name)
+    ConfigVar(const std::string& name, const T& var_val, const std::string& description = "")
+        : ConfigVarBase(name, description),
+          m_val(var_val)
     {
     }
 
@@ -55,36 +57,32 @@ public:
         }
         catch (std::exception& e)
         {
-            // LOG_FMT_ERROR(GET_ROOT, "ConfigVar::toString Exception | %s | convert %s to string.\n",
-            //               e.what(), typeid(m_val).name());
+            LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::toString Exception | %s | convert %s to string.\n",
+                          e.what(), typeid(m_val).name());
+            throw std::bad_cast();
         }
         return "<error>";
     }
 
     // template <typename M>
-    bool fromString(std::string& str) override
+    bool fromString(const std::string& str) override
     {
         try
         {
-            T val = boost::lexical_cast<T>(str);
-            m_val = val;
+            m_val = boost::lexical_cast<T>(str);
             return true;
         }
         catch (const std::exception& e)
         {
-            // LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::fromString exception | %s | convert string to %s.\n",
-            //               e.what(), typeid(m_val).name());
+            LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::fromString exception | %s | convert string to %s.\n",
+                          e.what(), typeid(m_val).name());
+            throw std::bad_cast();
         }
         return false;
     }
 
-    T& get_val()
-    {
-        return m_val;
-    }
-
 private:
-    T& m_val;
+    T m_val{};
 };
 
 class Config
@@ -92,7 +90,64 @@ class Config
 public:
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
+    static ConfigVarBase::ptr lookUp(const std::string& var_name)
+    {
+        auto itor = getDatas().find(var_name);
+        if (itor != getDatas().end())
+        {
+            LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s\n", var_name.c_str());
+            return itor->second;
+        }
+        return nullptr;
+    }
+
+    template <class T>
+    static typename ConfigVar<T>::ptr lookUp(const std::string& var_name, const T& default_val, const std::string& description = "")
+    {
+        // typename ConfigVar<T>::ptr val = lookUp(var_name);
+        auto val = lookUp<T>(var_name);
+        if (val)
+        {
+            return val;
+        }
+
+        if (var_name.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789._") != std::string::npos)
+        {
+            LOG_ERROR(GET_ROOT_LOGGER, "Var name must start with letter, num,  _ or .\n");
+            throw std::bad_cast();
+        }
+
+        auto new_val = std::make_shared<ConfigVar<T>>(var_name, default_val, description);
+        // getDatas().insert({var_name, new_val});
+        getDatas()[var_name] = new_val;
+
+        return new_val;
+    }
+
+    template <class T>
+    static typename ConfigVar<T>::ptr lookUp(const std::string& var_name)
+    {
+        auto val = lookUp(var_name);
+        if (!val)
+        {
+            return nullptr;
+        }
+
+        auto ptr = std::dynamic_pointer_cast<ConfigVar<T>>(val);
+        if (!ptr)
+        {
+            LOG_ERROR(GET_ROOT_LOGGER, "Config::lookUp() exception | Can not cast value to T of template\n");
+            throw std::bad_cast();
+        }
+        return ptr;
+    }
+
 private:
+    static ConfigVarMap& getDatas()
+    {
+        return m_datas;
+    }
+
     static ConfigVarMap m_datas;
 };
 
