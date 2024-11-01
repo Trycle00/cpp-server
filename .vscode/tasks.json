@@ -9,8 +9,11 @@
 				"-fdiagnostics-color=always",
 				"-g",
 				"${fileDirname}/**.cc",
+				"-I",
+				"/usr/local/include",
 				"-o",
-				"main"
+				"main",
+				"-lyaml-cpp"
 			],
 			"options": {
 				"cwd": "${fileDirname}"

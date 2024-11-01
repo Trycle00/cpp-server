@@ -7,6 +7,7 @@
 #include "config.h"
 #include "log.h"
 #include "util.h"
+#include <yaml-cpp/yaml.h>
 
 int main(int argc, char** argv)
 {
@@ -60,6 +61,14 @@ int main(int argc, char** argv)
 
     trycle::ConfigVar<std::string>::ptr var2 = trycle::Config::lookUp("test.k.var2", std::string("aaa"), "var2 is aaa");
     LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s=%s", var2->get_var_name().c_str(), var2->toString().c_str());
+
+
+    printf("----------------------\n");
+    printf("TEST_YAML:\n");
+
+    YAML::Node node = YAML::LoadFile("./conf/config.yaml");
+    
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "node.size(): %d", (int)node.size());
 
 
     printf("----------------------\n");
