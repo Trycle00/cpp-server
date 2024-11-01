@@ -8,9 +8,9 @@
 			"args": [
 				"-fdiagnostics-color=always",
 				"-g",
-				"${file}",
+				"${fileDirname}/**.cc",
 				"-o",
-				"${fileDirname}/${fileBasenameNoExtension}"
+				"main"
 			],
 			"options": {
 				"cwd": "${fileDirname}"
