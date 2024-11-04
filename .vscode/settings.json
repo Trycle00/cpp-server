@@ -118,6 +118,8 @@
     "cinttypes": "cpp",
     "typeinfo": "cpp",
     "set": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "optional": "cpp",
+    "ranges": "cpp"
   }
 }

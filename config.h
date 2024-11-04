@@ -1,8 +1,10 @@
 #ifndef TRY_CONFIG_H
 #define TRY_CONFIG_H
 
-#include <iostream>
+#include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <iostream>
+#include <yaml-cpp/yaml.h>
 
 #include "log.h"
 
@@ -53,7 +55,10 @@ public:
     {
         try
         {
-            return boost::lexical_cast<std::string>(m_val);
+            // std::string cast_val = boost::lexical_cast<std::string>(m_val);
+            // return m_name + "=" + cast_val;
+            // return cast_val;
+            return m_name + "=" + boost::lexical_cast<std::string>(m_val);
         }
         catch (std::exception& e)
         {
@@ -82,12 +87,13 @@ public:
     }
 
 private:
-    T m_val{};
+    T m_val;
 };
 
 class Config
 {
 public:
+    typedef std::shared_ptr<Config> ptr;
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
     static ConfigVarBase::ptr lookUp(const std::string& var_name)
@@ -95,7 +101,7 @@ public:
         auto itor = getDatas().find(var_name);
         if (itor != getDatas().end())
         {
-            LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s\n", var_name.c_str());
+            //LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s", var_name.c_str());
             return itor->second;
         }
         return nullptr;
@@ -142,7 +148,60 @@ public:
         return ptr;
     }
 
+    static void loadFromYAML(const YAML::Node& root)
+    {
+        std::vector<std::pair<std::string, YAML::Node>> node_list;
+        traversalNode(root, "", node_list);
+        for (const auto& pair : node_list)
+        {
+            std::string key = pair.first;
+            if (key.empty())
+            {
+                continue;
+            }
+
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+            auto var = lookUp(key);
+            if (var)
+            {
+
+                std::stringstream ss;
+                ss << pair.second;
+                var->fromString(ss.str());
+            }
+        }
+    }
+
 private:
+    static void traversalNode(const YAML::Node& node, const std::string& name, std::vector<std::pair<std::string, YAML::Node>>& output)
+    {
+        auto output_itor = std::find_if(output.begin(), output.end(), [&name](const std::pair<std::string, YAML::Node>& val)
+                                        { return val.first == name; });
+        if (output_itor != output.end())
+        {
+            output_itor->second = node;
+        }
+        else
+        {
+            output.push_back(std::make_pair(name, node));
+        }
+
+        if (node.IsSequence())
+        {
+            for (size_t i{}; i < node.size(); i++)
+            {
+                traversalNode(node[i], name + "." + std::to_string(i), output);
+            }
+        }
+        if (node.IsMap())
+        {
+            for (auto itor = node.begin(); itor != node.end(); itor++)
+            {
+                traversalNode(itor->second, name.empty() ? itor->first.Scalar() : name + "." + itor->first.Scalar(), output);
+            }
+        }
+    }
+
     static ConfigVarMap& getDatas()
     {
         return m_datas;

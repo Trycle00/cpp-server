@@ -112,5 +112,18 @@ int main(int argc, char** argv)
 
     printf("----------------------\n");
 
+    printf("TEST_config:\n");
+
+    // trycle::Config::lookUp<std::string>("system.port", "11", "");
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "Before: %s", trycle::Config::lookUp<std::string>("system.port", "11")->toString().c_str());
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "Before: %s", trycle::Config::lookUp<std::string>("system.name", "22")->toString().c_str());
+    YAML::Node root2 = YAML::LoadFile("conf/config.yaml");
+    trycle::Config::loadFromYAML(root2);
+
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "After: %s", trycle::Config::lookUp("system.port")->toString().c_str());
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "After: %s", trycle::Config::lookUp("system.name")->toString().c_str());
+
+    printf("----------------------\n");
+
     return 0;
 }

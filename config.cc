@@ -11,4 +11,10 @@ Config::ConfigVarMap Config::m_datas;
 //     return out;
 // }
 
+// static void loadFromYaml()
+// {
+
+//     // return nullptr;
+// }
+
 } // namespace trycle

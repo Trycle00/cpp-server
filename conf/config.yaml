@@ -14,3 +14,7 @@ logs:
     appender:
       - type: 1
         file: ./logs/sftest_system_log.txt
+
+system:
+  port: 9191
+  name: "system name"
