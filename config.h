@@ -4,6 +4,11 @@
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <list>
+#include <map>
+#include <set>
+#include <sstream>
+#include <vector>
 #include <yaml-cpp/yaml.h>
 
 #include "log.h"
@@ -35,6 +40,101 @@ public:
 protected:
     std::string m_name;
     std::string m_var_description;
+};
+
+/**
+ * @brief YAML格式字符串到其他类型的转换仿函数
+ * boost::lexical_cast的包装
+ * 因为boost::lexical_cast是使用std::stringstream实现的类型转换，
+ * 所以仅支持实现了ostream::operator<<与isstream::operator>>的类型，
+ * 可以说默认情况下仅支持std::string与各类Number类型的双向转换。
+ * 需要转换自定义的类型，可以选择实现对应类型的流操作，或者将模板类进行偏特化。 *
+ */
+template <typename Source, typename Target>
+class LexicalCast
+{
+
+public:
+    Target operator()(const Source& source)
+    {
+        return boost::lexical_cast<Target>(source);
+    }
+};
+
+// 转成特定类型
+// template <>
+// class LexicalCast<std::string, YAML::Node>
+// {
+
+// public:
+//     YAML::Node operator()(const std::string& str)
+//     {
+//         YAML::Node node = YAML::Load(str);
+//         return node;
+//     }
+// };
+
+template <typename T>
+class LexicalCast<std::string, std::vector<T>>
+{
+public:
+    std::vector<T> operator()(const std::string& str)
+    {
+        YAML::Node node = YAML::Load(str);
+        typename std::vector<T> vec;
+        if (node.IsSequence())
+        {
+            std::stringstream ss;
+            for (const auto& item : node)
+            {
+                // ss.str(""); // reset
+                // ss << item;
+                // vec.push_back(LexicalCast<std::string, T>()(ss.str()));
+                vec.push_back(item);
+            }
+        }
+        return vec;
+    }
+};
+
+template <typename T>
+class LexicalCast<std::vector<T>, std::string>
+{
+public:
+    std::string operator()(const std::vector<T> vec)
+    {
+        YAML::Node node;
+        for (const auto& n : vec)
+        {
+            node.push_back(LexicalCast<T, std::string>()(n));
+        }
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <typename T>
+class LexicalCast<std::map<std::string, T>, std::string>
+{
+public:
+    std::string operator()(const std::map<std::string, T>& map)
+    {
+        return "TODO";
+    }
+};
+
+template <typename T>
+class LexicalCast<std::string, std::map<std::string, T>>
+{
+public:
+    std::map<std::string, T> operator()(const std::string& str)
+    {
+        std::map<std::string, T> map;
+        // TODO
+        return map;
+    }
 };
 
 template <class T>
@@ -101,7 +201,7 @@ public:
         auto itor = getDatas().find(var_name);
         if (itor != getDatas().end())
         {
-            //LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s", var_name.c_str());
+            // LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s", var_name.c_str());
             return itor->second;
         }
         return nullptr;
