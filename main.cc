@@ -9,6 +9,46 @@
 #include "util.h"
 #include <yaml-cpp/yaml.h>
 
+void print_yaml(YAML::Node node, int level)
+{
+    if (node.IsScalar())
+    {
+        LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d : %s", std::string(level * 2, ' ').c_str(), level, node.Scalar().c_str());
+    }
+    else if (node.IsNull())
+    {
+        // LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d--%s: ", std::string(level * 2, ' ').c_str(), level, static_cast<std::string>(node[i].Type()).c_str());
+    }
+    else if (node.IsSequence())
+    {
+        LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d--%d", std::string(level * 2, ' ').c_str(), level, node.Type());
+        for (size_t i{}; i < node.size(); i++)
+        {
+            auto n = node[i];
+            if (n.IsMap() || n.IsSequence())
+            {
+                print_yaml(n, level + 1);
+                continue;
+            }
+            LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d: %s", std::string(level * 2, ' ').c_str(), level, n.as<std::string>().c_str());
+        }
+    }
+    else if (node.IsMap())
+    {
+        for (auto itor = node.begin(); itor != node.end(); itor++)
+        {
+            LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d--%d", std::string(level * 2, ' ').c_str(), level, node.Type());
+            if (itor->second.IsMap() || itor->second.IsSequence())
+            {
+                LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d--%s:", std::string(level * 2, ' ').c_str(), level, itor->first.as<std::string>().c_str());
+                print_yaml(itor->second, level + 1);
+                continue;
+            }
+            LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s--%d--%s: %s", std::string(level * 2, ' ').c_str(), level, itor->first.as<std::string>().c_str(), itor->second.as<std::string>().c_str());
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     printf("1======================\n");
@@ -62,14 +102,13 @@ int main(int argc, char** argv)
     trycle::ConfigVar<std::string>::ptr var2 = trycle::Config::lookUp("test.k.var2", std::string("aaa"), "var2 is aaa");
     LOG_FMT_DEBUG(GET_ROOT_LOGGER, "%s=%s", var2->get_var_name().c_str(), var2->toString().c_str());
 
-
     printf("----------------------\n");
     printf("TEST_YAML:\n");
 
-    YAML::Node node = YAML::LoadFile("./conf/config.yaml");
-    
-    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "node.size(): %d", (int)node.size());
+    YAML::Node root = YAML::LoadFile("./conf/config.yaml");
+    print_yaml(root, 0);
 
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "node.size(): %d", (int)root.size());
 
     printf("----------------------\n");
 

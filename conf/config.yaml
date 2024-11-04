@@ -10,6 +10,7 @@ logs:
   - name: system
     level: 4
     formatter: "[%d] [%p] [%f]%T%m%n"
+    tests: [111,222,333]
     appender:
       - type: 1
         file: ./logs/sftest_system_log.txt
