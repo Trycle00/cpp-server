@@ -87,10 +87,9 @@ public:
             std::stringstream ss;
             for (const auto& item : node)
             {
-                // ss.str(""); // reset
-                // ss << item;
-                // vec.push_back(LexicalCast<std::string, T>()(ss.str()));
-                vec.push_back(item);
+                ss.str(""); // reset
+                ss << item;
+                vec.push_back(LexicalCast<std::string, T>()(ss.str()));
             }
         }
         return vec;
@@ -158,7 +157,8 @@ public:
             // std::string cast_val = boost::lexical_cast<std::string>(m_val);
             // return m_name + "=" + cast_val;
             // return cast_val;
-            return m_name + "=" + boost::lexical_cast<std::string>(m_val);
+            // return m_name + "=" + boost::lexical_cast<std::string>(m_val);
+            return boost::lexical_cast<std::string>(m_val);
         }
         catch (std::exception& e)
         {
@@ -184,6 +184,11 @@ public:
             throw std::bad_cast();
         }
         return false;
+    }
+
+    T& getVal() const
+    {
+        return m_val;
     }
 
 private:
@@ -309,6 +314,8 @@ private:
 
     static ConfigVarMap m_datas;
 };
+
+std::ostream& operator<<(std::ostream& out, const ConfigVarBase& operand);
 
 } // namespace trycle
 

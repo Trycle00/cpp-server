@@ -10,7 +10,6 @@ logs:
   - name: system
     level: 4
     formatter: "[%d] [%p] [%f]%T%m%n"
-    tests: [111,222,333]
     appender:
       - type: 1
         file: ./logs/sftest_system_log.txt
@@ -18,3 +17,17 @@ logs:
 system:
   port: 9191
   name: "system name"
+
+  
+test:
+  - int_val: 10
+   int_vec: 
+      - 111
+      - 222
+      - 333
+    int_list: [100, 200, 300]
+    int_set: [500, 510, 550, 500]
+    int_map:
+      - k1: 1000
+        k2: 2000
+  
