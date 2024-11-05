@@ -9,7 +9,7 @@
       "stopAtEntry": false,
       "externalConsole": false,
       "cwd": "${fileDirname}",
-      "program": "/mnt/host_d/workdata/local/cpp/server/main",
+      "program": "${workspaceFolder}/<executable file>",
       "MIMode": "gdb",
       "miDebuggerPath": "/usr/bin/gdb",
       "setupCommands": [

@@ -61,19 +61,6 @@ public:
     }
 };
 
-// 转成特定类型
-// template <>
-// class LexicalCast<std::string, YAML::Node>
-// {
-
-// public:
-//     YAML::Node operator()(const std::string& str)
-//     {
-//         YAML::Node node = YAML::Load(str);
-//         return node;
-//     }
-// };
-
 template <typename T>
 class LexicalCast<std::string, std::vector<T>>
 {
@@ -115,12 +102,101 @@ public:
 };
 
 template <typename T>
+class LexicalCast<std::string, std::list<T>>
+{
+public:
+    std::list<T> operator()(const std::string& str)
+    {
+        YAML::Node node = YAML::Load(str);
+        typename std::list<T> vec;
+        if (node.IsSequence())
+        {
+            std::stringstream ss;
+            for (const auto& item : node)
+            {
+                ss.str(""); // reset
+                ss << item;
+                vec.push_back(LexicalCast<std::string, T>()(ss.str()));
+            }
+        }
+        return vec;
+    }
+};
+
+template <typename T>
+class LexicalCast<std::list<T>, std::string>
+{
+public:
+    std::string operator()(const std::list<T> vec)
+    {
+        YAML::Node node;
+        for (const auto& n : vec)
+        {
+            node.push_back(LexicalCast<T, std::string>()(n));
+        }
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <typename T>
+class LexicalCast<std::set<T>, std::string>
+{
+public:
+    std::string operator()(const std::set<T>& list)
+    {
+        YAML::Node node;
+        for (const auto& i : list)
+        {
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(i)));
+        }
+
+        std::stringstream ss;
+        ss << node;
+
+        return ss.str();
+    }
+};
+
+template <typename T>
+class LexicalCast<std::string, std::set<T>>
+{
+public:
+    std::set<T> operator()(const std::string& str)
+    {
+        std::set<T> list;
+        YAML::Node node = YAML::Load(str);
+        std::stringstream ss;
+        for (const auto& n : node)
+        {
+            ss.str("");
+            ss << n;
+            list.insert(LexicalCast<std::string, T>()(ss.str()));
+        }
+
+        return list;
+    }
+};
+
+template <typename T>
 class LexicalCast<std::map<std::string, T>, std::string>
 {
 public:
     std::string operator()(const std::map<std::string, T>& map)
     {
-        return "TODO";
+        YAML::Node node;
+        for (const auto& it : map)
+        {
+            std::cout << "@@@@@@@@@@@@@@@11 resstr=" << it.second << std::endl;
+            node.push_back(YAML::Load(LexicalCast<T, std::string>()(it.second)));
+        }
+
+        std::stringstream ss;
+        ss << node;
+
+        return ss.str();
     }
 };
 
@@ -131,12 +207,25 @@ public:
     std::map<std::string, T> operator()(const std::string& str)
     {
         std::map<std::string, T> map;
-        // TODO
+
+        YAML::Node node = YAML::Load(str);
+        std::stringstream ss;
+        for (const auto& n : node)
+        {
+            ss.str("");
+            ss << n.second;
+            std::string resstr = ss.str();
+            std::cout << "@@@@@@@@@@@@@@@22 resstr=" << resstr << std::endl;
+            map.insert(std::make_pair(n.first.as<std::string>(), LexicalCast<std::string, T>()(resstr)));
+        }
+
         return map;
     }
 };
 
-template <class T>
+template <class T,
+          class ToStringFN   = LexicalCast<T, std::string>,
+          class FromStringFN = LexicalCast<std::string, T>>
 class ConfigVar : public ConfigVarBase
 {
     // friend std::ostream& operator<< (std::ostream&out, const ConfigVar<T> operand);
@@ -158,7 +247,8 @@ public:
             // return m_name + "=" + cast_val;
             // return cast_val;
             // return m_name + "=" + boost::lexical_cast<std::string>(m_val);
-            return boost::lexical_cast<std::string>(m_val);
+            // return boost::lexical_cast<std::string>(m_val);
+            return ToStringFN()(m_val);
         }
         catch (std::exception& e)
         {
@@ -174,7 +264,8 @@ public:
     {
         try
         {
-            m_val = boost::lexical_cast<T>(str);
+            // m_val = boost::lexical_cast<T>(str);
+            m_val = FromStringFN()(str);
             return true;
         }
         catch (const std::exception& e)
@@ -186,7 +277,7 @@ public:
         return false;
     }
 
-    T& getVal() const
+    T getVal() const
     {
         return m_val;
     }
@@ -195,6 +286,9 @@ private:
     T m_val;
 };
 
+/**
+ * 配置思想：约定优于配置，即，优先使用代码所传默认参数；加载配置时，只加载有默认参数的配置
+ */
 class Config
 {
 public:
@@ -203,13 +297,32 @@ public:
 
     static ConfigVarBase::ptr lookUp(const std::string& var_name)
     {
-        auto itor = getDatas().find(var_name);
-        if (itor != getDatas().end())
+        ConfigVarMap& var_map = getDatas();
+        auto itor             = var_map.find(var_name);
+        if (itor != var_map.end())
         {
             // LOG_FMT_INFO(GET_ROOT_LOGGER, "Found config val %s", var_name.c_str());
             return itor->second;
         }
         return nullptr;
+    }
+
+    template <class T>
+    static typename ConfigVar<T>::ptr lookUp(const std::string& var_name)
+    {
+        auto val = lookUp(var_name);
+        if (!val)
+        {
+            return nullptr;
+        }
+
+        auto ptr = std::dynamic_pointer_cast<ConfigVar<T>>(val);
+        if (!ptr)
+        {
+            LOG_ERROR(GET_ROOT_LOGGER, "Config::lookUp() exception | Can not cast value to T of template\n");
+            throw std::bad_cast();
+        }
+        return ptr;
     }
 
     template <class T>
@@ -235,24 +348,6 @@ public:
         return new_val;
     }
 
-    template <class T>
-    static typename ConfigVar<T>::ptr lookUp(const std::string& var_name)
-    {
-        auto val = lookUp(var_name);
-        if (!val)
-        {
-            return nullptr;
-        }
-
-        auto ptr = std::dynamic_pointer_cast<ConfigVar<T>>(val);
-        if (!ptr)
-        {
-            LOG_ERROR(GET_ROOT_LOGGER, "Config::lookUp() exception | Can not cast value to T of template\n");
-            throw std::bad_cast();
-        }
-        return ptr;
-    }
-
     static void loadFromYAML(const YAML::Node& root)
     {
         std::vector<std::pair<std::string, YAML::Node>> node_list;
@@ -272,7 +367,8 @@ public:
 
                 std::stringstream ss;
                 ss << pair.second;
-                var->fromString(ss.str());
+                std::string strRes = ss.str();
+                var->fromString(strRes);
             }
         }
     }
@@ -312,7 +408,6 @@ private:
         static ConfigVarMap m_datas;
         return m_datas;
     }
-
 };
 
 std::ostream& operator<<(std::ostream& out, const ConfigVarBase& operand);

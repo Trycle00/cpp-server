@@ -6,17 +6,17 @@ namespace trycle
 
 // Config::ConfigVarMap Config::m_datas;
 
-// std::ostream& operator<<(std::ostream& out, const ConfigVarBase& operand)
-// {
-//     out << operand.toString();
-//     return out;
-// }
-
-std::ostream& operator<<(std::ostream& out, const ConfigVarBase& cvb)
+std::ostream& operator<<(std::ostream& out, const ConfigVarBase& operand)
 {
-    // out << cvb.getName() << ": " << cvb.toString();
+    out << operand.get_var_name() << ": " << operand.toString();
     return out;
 }
+
+// std::ostream& operator<<(std::ostream& out, const ConfigVarBase& cvb)
+// {
+//     // out << cvb.getName() << ": " << cvb.toString();
+//     return out;
+// }
 
 // static void loadFromYaml()
 // {

@@ -1,18 +1,18 @@
-logs:
-  - name: root
-    level: 1
-    formatter: "[%d] [%p] [%f:%l]%T%m%n"
-    appender:
-      - type: 1
-        level: 2
-        file: ./logs/sftest_root_log.txt
-      - type: 0
-  - name: system
-    level: 4
-    formatter: "[%d] [%p] [%f]%T%m%n"
-    appender:
-      - type: 1
-        file: ./logs/sftest_system_log.txt
+# logs:
+#   - name: root
+#     level: 1
+#     formatter: "[%d] [%p] [%f:%l]%T%m%n"
+#     appender:
+#       - type: 1
+#         level: 2
+#         file: ./logs/sftest_root_log.txt
+#       - type: 0
+#   - name: system
+#     level: 4
+#     formatter: "[%d] [%p] [%f]%T%m%n"
+#     appender:
+#       - type: 1
+#         file: ./logs/sftest_system_log.txt
 
 system:
   port: 9191
@@ -20,14 +20,14 @@ system:
 
   
 test:
-  - int_val: 10
-    int_vec: 
-      - 111
-      - 222
-      - 333
-    int_list: [100, 200, 300]
-    int_set: [500, 510, 550, 500]
-    int_map:
-      - k1: 1000
-        k2: 2000
+  int_val: 10
+  int_vec: 
+    - 111
+    - 222
+    - 333
+  int_list: [100, 200, 300]
+  int_set: [500, 510, 550, 500]
+  int_map:
+    k1: 1000
+    k2: 2000
   
