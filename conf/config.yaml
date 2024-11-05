@@ -21,7 +21,7 @@ system:
   
 test:
   - int_val: 10
-   int_vec: 
+    int_vec: 
       - 111
       - 222
       - 333

@@ -31,7 +31,7 @@
 #define LOG_FMT_LEVEL(logger, level, format, argv...)         \
     {                                                         \
         char* dyn_buf     = nullptr;                          \
-        const int written = asprintf(&dyn_buf, format, argv); \
+        int written = asprintf(&dyn_buf, format, argv); \
         if (written != -1)                                    \
         {                                                     \
             LOG_LEVEL(logger, level, dyn_buf);                \

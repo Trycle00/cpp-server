@@ -309,10 +309,10 @@ private:
 
     static ConfigVarMap& getDatas()
     {
+        static ConfigVarMap m_datas;
         return m_datas;
     }
 
-    static ConfigVarMap m_datas;
 };
 
 std::ostream& operator<<(std::ostream& out, const ConfigVarBase& operand);
