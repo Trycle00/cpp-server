@@ -7,14 +7,18 @@
 #include <map>
 #include <memory>
 
+#include <boost/lexical_cast.hpp>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <yaml-cpp/yaml.h>
 
+#include "magic_enum.hpp"
 #include "singleton.h"
 #include "util.h"
+// #include "config.h"
 
 #define MAKE_LOG_EVENT(level, message) \
     std::make_shared<trycle::LogEvent>(__FILE__, __LINE__, trycle::GetThreadId(), trycle::GetFiberId(), time(0), message, level)
@@ -28,15 +32,15 @@
 #define LOG_ERROR(logger, message) LOG_LEVEL(logger, trycle::LogLevel::ERROR, message)
 #define LOG_FATAL(logger, message) LOG_LEVEL(logger, trycle::LogLevel::FATAL, message)
 
-#define LOG_FMT_LEVEL(logger, level, format, argv...)         \
-    {                                                         \
-        char* dyn_buf     = nullptr;                          \
-        int written = asprintf(&dyn_buf, format, argv); \
-        if (written != -1)                                    \
-        {                                                     \
-            LOG_LEVEL(logger, level, dyn_buf);                \
-            free(dyn_buf);                                    \
-        }                                                     \
+#define LOG_FMT_LEVEL(logger, level, format, argv...)     \
+    {                                                     \
+        char* dyn_buf = nullptr;                          \
+        int written   = asprintf(&dyn_buf, format, argv); \
+        if (written != -1)                                \
+        {                                                 \
+            LOG_LEVEL(logger, level, dyn_buf);            \
+            free(dyn_buf);                                \
+        }                                                 \
     }
 
 #define LOG_FMT_DEBUG(logger, format, argv...) LOG_FMT_LEVEL(logger, trycle::LogLevel::DEBUG, format, argv)
@@ -68,6 +72,54 @@ public:
 
     static const std::string ToString(LogLevel::Level level);
 };
+
+struct LogAppenderConfig
+{
+    typedef std::shared_ptr<LogAppenderConfig> ptr;
+    int type;
+    LogLevel::Level level = LogLevel::Level::UNKNOWN;
+    std::string file;
+    bool operator==(const LogAppenderConfig& right) const
+    {
+        return level == right.level && type == right.type && file == right.file;
+    }
+    bool operator<(const LogAppenderConfig& right) const
+    {
+        return type < right.type;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const LogAppenderConfig& operand)
+    {
+        out << operand.type;
+        return out;
+    }
+};
+
+struct LogConfig
+{
+    typedef std::shared_ptr<LogConfig> ptr;
+    LogLevel::Level level = LogLevel::Level::UNKNOWN;
+    std::string name;
+    std::string formatter;
+    std::set<LogAppenderConfig> appenders;
+
+    bool operator==(const LogConfig& right) const
+    {
+        // return level == right.level && name == right.name && formatter == right.formatter && appenders == right.appenders;
+        return name == right.name;
+    }
+    bool operator<(const LogConfig& right) const
+    {
+        return level < right.level;
+    }
+
+    friend std::ostream& operator<<(std::ostream& out, const LogConfig& operand)
+    {
+        out << operand.name;
+        return out;
+    }
+};
+
 
 // 日志事件
 class LogEvent
@@ -149,6 +201,7 @@ protected:
 // 日志器
 class Logger
 {
+    friend class __LoggerManager;
 
 public:
     typedef std::shared_ptr<Logger> ptr;
@@ -204,6 +257,7 @@ private:
     LogLevel::Level m_level = LogLevel::DEBUG; // 日志级别
     LogFormatter::ptr m_log_formatter;
     std::list<LogAppender::ptr> m_appenders; // Appender集合
+    // Logger::ptr m_root;                      // root logger use as default
 };
 
 // 定义输出到控制台的Appender
@@ -249,8 +303,8 @@ public:
         return m_root;
     }
 
+    void init(const std::set<LogConfig> & log_configs);
 private:
-    void init();
     std::map<std::string, Logger::ptr> m_logger_map;
     Logger::ptr m_root;
 };

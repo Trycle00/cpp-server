@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "singleton.h"
 #include "util.h"
 
 trycle::ConfigVar<int>::ptr int_val = trycle::Config::lookUp("test.int_val", 1);
@@ -201,6 +202,12 @@ void TEST_FunctionCB()
 int main(int argc, char** argv)
 {
     printf("1======================\n");
+    printf("init logger by yaml config...\n");
+    auto log_configs = trycle::Config::lookUp("logs", std::set<trycle::LogConfig>());
+    trycle::Config::loadFromYAML(YAML::LoadFile("../conf/config.yaml"));
+    trycle::LoggerManager::GetSingleton()->init(log_configs->getVal());
+
+    printf("----------------------\n");
     printf("TEST_config:\n");
 
     // // trycle::Config::lookUp<std::string>("system.port", "11", "");
@@ -223,6 +230,14 @@ int main(int argc, char** argv)
     printf("----------------------\n");
 
     TEST_LexicalCast_Class();
+
+    printf("----------------------\n");
+    
+    auto test_logger = trycle::LoggerManager::GetSingleton()->getLogger("test");
+    LOG_DEBUG(test_logger, "test............logger | use root as default");
+    
+    auto system_logger = trycle::LoggerManager::GetSingleton()->getLogger("system");
+    LOG_DEBUG(system_logger, "system............logger | use system log config and will not print out if level > 1");
 
     printf("----------------------\n");
 

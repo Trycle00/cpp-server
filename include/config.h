@@ -225,6 +225,100 @@ public:
     }
 };
 
+template <>
+class LexicalCast<std::string, LogAppenderConfig>
+{
+
+public:
+    LogAppenderConfig operator()(const std::string& str)
+    {
+        YAML::Node node = YAML::Load(str);
+        LogAppenderConfig config;
+
+        config.type = node["type"].as<int>();
+        if (node["level"])
+        {
+            config.level = static_cast<LogLevel::Level>(node["level"].as<int>());
+        }
+        if (node["file"])
+        {
+            config.file = node["file"].as<std::string>();
+        }
+
+        return config;
+    }
+};
+template <>
+class LexicalCast<LogAppenderConfig, std::string>
+{
+public:
+    std::string operator()(const LogAppenderConfig& config)
+    {
+        YAML::Node node;
+
+        node["type"]  = config.type;
+        node["level"] = (int)config.level;
+        node["file"]  = config.file;
+
+        std::stringstream ss;
+        ss << node;
+        return ss.str();
+    }
+};
+
+template <>
+class LexicalCast<std::string, LogConfig>
+{
+public:
+    LogConfig operator()(const std::string& str)
+    {
+        YAML::Node node = YAML::Load(str);
+        LogConfig log_config;
+        log_config.name      = node["name"].as<std::string>();
+        log_config.formatter = node["formatter"].as<std::string>();
+        log_config.level     = static_cast<LogLevel::Level>(node["level"].as<int>());
+        auto appender        = node["appender"];
+        if (appender)
+        {
+            std::stringstream ss;
+            ss << appender;
+            log_config.appenders = LexicalCast<std::string, std::set<LogAppenderConfig>>()(ss.str());
+        }
+        return log_config;
+    }
+};
+
+template <>
+class LexicalCast<LogConfig, std::string>
+{
+public:
+    std::string operator()(const LogConfig& config)
+    {
+        YAML::Node node;
+
+        std::stringstream ss;
+
+        node["name"]  = config.name;
+        node["level"] = 1; // TODO config.level;
+        node["name"]  = config.formatter;
+
+        // if (config.appenders)
+        // {
+        // for (const auto& item : config.appenders)
+        // {
+        //     ss.str("");
+        //     ss << item;
+        //     node["apppender"] = ss.str();
+        // }
+        // }
+        node["appender"] = YAML::Load(LexicalCast<std::set<LogAppenderConfig>, std::string>()(config.appenders));
+
+        ss.str("");
+        ss << node;
+        return ss.str();
+    }
+};
+
 template <class T,
           class ToStringFN   = LexicalCast<T, std::string>,
           class FromStringFN = LexicalCast<std::string, T>>
@@ -255,8 +349,8 @@ public:
         }
         catch (std::exception& e)
         {
-            LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::toString Exception | %s | convert %s to string.\n",
-                          e.what(), typeid(m_val).name());
+            printf("ConfigVar::toString Exception | %s | convert %s to string.\n",
+                   e.what(), typeid(m_val).name());
             throw std::bad_cast();
         }
         return "<error>";
@@ -273,8 +367,8 @@ public:
         }
         catch (const std::exception& e)
         {
-            LOG_FMT_ERROR(GET_ROOT_LOGGER, "ConfigVar::fromString exception | %s | convert string to %s.\n",
-                          e.what(), typeid(m_val).name());
+            printf("ConfigVar::fromString exception | %s | convert string to %s | %s.\n",
+                   e.what(), typeid(m_val).name(), str.c_str());
             throw std::bad_cast();
         }
         return false;
@@ -348,7 +442,7 @@ public:
         auto ptr = std::dynamic_pointer_cast<ConfigVar<T>>(val);
         if (!ptr)
         {
-            LOG_ERROR(GET_ROOT_LOGGER, "Config::lookUp() exception | Can not cast value to T of template\n");
+            printf("Config::lookUp() exception | Can not cast value to T of template\n");
             throw std::bad_cast();
         }
         return ptr;
@@ -366,7 +460,7 @@ public:
 
         if (var_name.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789._") != std::string::npos)
         {
-            LOG_ERROR(GET_ROOT_LOGGER, "Var name must start with letter, num,  _ or .\n");
+            printf("Var name must start with letter, num,  _ or .\n");
             throw std::bad_cast();
         }
 

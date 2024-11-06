@@ -5,6 +5,8 @@
 #include <sstream>
 #include <typeinfo>
 
+#include "config.h"
+
 namespace trycle
 {
 
@@ -297,8 +299,8 @@ std::string LogFormatter::format(LogEvent::ptr event)
     {
         it->format(str, event);
     }
-    //str << "\n";
-    // std::string ss = str.str();
+    // str << "\n";
+    //  std::string ss = str.str();
     return str.str();
 }
 
@@ -362,30 +364,81 @@ void LogFormatter::init()
 
 __LoggerManager::__LoggerManager()
 {
-    init();
+    // init();
 }
 
-void __LoggerManager::init()
+Logger::ptr makeLogger(const LogConfig& config)
 {
-    // static
-    auto log_formater = std::make_shared<LogFormatter>("%d [%p] %f:%l [%t-%F] - %m%n");
-    auto root         = std::make_shared<Logger>("root", LogLevel::Level::DEBUG, log_formater);
-    m_root            = root;
-    m_root->addAppender(std::make_shared<StdoutAppender>());
-    m_root->addAppender(std::make_shared<FileAppender>("./log.txt"));
-    m_logger_map.insert({"root", root});
+    auto formatter = std::make_shared<LogFormatter>(config.formatter);
+    auto logger    = std::make_shared<Logger>(config.name, config.level, formatter);
 
-    // const Logger::ptr logger = std::make_shared<Logger>(logger_name, m_root->getLevel(), m_root->getLogFormater());
-    // logger->setLogAppenders(m_root->getLogAppenders());
+    for (const auto& item : config.appenders)
+    {
+        auto level = item.level;
+        if (level == LogLevel::Level::UNKNOWN)
+        {
+            level = config.level;
+        }
 
-    const std::string logger_name{"adf"};
-    // m_logger_map.insert(std::make_pair<std::string, Logger::ptr>(logger_name, logger));
-    Logger::ptr logger;
-    m_logger_map.insert({logger_name, logger});
+        LogAppender::ptr appender{nullptr};
+        if (item.type == 1)
+        {
+            appender = std::make_shared<StdoutAppender>();
+        }
+        else if (item.type == 2)
+        {
+            appender = std::make_shared<FileAppender>(item.file);
+        }
 
-    Logger::ptr loggerx;
-    m_logger_map.insert({logger_name, loggerx});
+        appender->setLevel(level);
+        appender->setFormatter(formatter);
+        logger->addAppender(appender);
+    }
+
+    return logger;
 }
+
+void __LoggerManager::init(const std::set<LogConfig>& log_configs)
+{
+    // auto log_configs = Config::lookUp("logs", std::set<LogConfig>());
+    // Config::loadFromYAML(YAML::LoadFile("../conf/config.yaml"));
+
+    // log_configs->add_listener(100, [](const LogConfig& old_val, const LogConfig& new_val)
+    //                           { std::cout << "OnChange | old_val=" << old_val.name << ", new_val=" << new_val.name << "\n"; });
+    // for (const auto& log_config : log_configs->getVal())
+    for (const auto& log_config : log_configs)
+    {
+        auto logger                  = makeLogger(log_config);
+        m_logger_map[logger->m_name] = logger;
+        
+        if (logger->m_name == "root")
+        {
+            m_root = logger;
+        }
+    }
+}
+
+// void __LoggerManager::init()
+// {
+//     // static
+//     auto log_formater = std::make_shared<LogFormatter>("%d [%p] %f:%l [%t-%F] - %m%n");
+//     auto root         = std::make_shared<Logger>("root", LogLevel::Level::DEBUG, log_formater);
+//     m_root            = root;
+//     m_root->addAppender(std::make_shared<StdoutAppender>());
+//     m_root->addAppender(std::make_shared<FileAppender>("./log.txt"));
+//     m_logger_map.insert({"root", root});
+
+//     // const Logger::ptr logger = std::make_shared<Logger>(logger_name, m_root->getLevel(), m_root->getLogFormater());
+//     // logger->setLogAppenders(m_root->getLogAppenders());
+
+//     const std::string logger_name{"adf"};
+//     // m_logger_map.insert(std::make_pair<std::string, Logger::ptr>(logger_name, logger));
+//     Logger::ptr logger;
+//     m_logger_map.insert({logger_name, logger});
+
+//     Logger::ptr loggerx;
+//     m_logger_map.insert({logger_name, loggerx});
+// }
 
 Logger::ptr __LoggerManager::getLogger(const std::string logger_name)
 {

@@ -1,18 +1,18 @@
-# logs:
-#   - name: root
-#     level: 1
-#     formatter: "[%d] [%p] [%f:%l]%T%m%n"
-#     appender:
-#       - type: 1
-#         level: 2
-#         file: ./logs/sftest_root_log.txt
-#       - type: 0
-#   - name: system
-#     level: 4
-#     formatter: "[%d] [%p] [%f]%T%m%n"
-#     appender:
-#       - type: 1
-#         file: ./logs/sftest_system_log.txt
+logs:
+  - name: root
+    level: 1
+    formatter: "[%d] [%p] [%f:%l]%T%m%n"
+    appender:
+      - type: 1
+        level: 1
+      - type: 2
+        file: ./logs/sftest_root_log.txt
+  - name: system
+    level: 4
+    formatter: "[%d] [%p] [%f]%T%m%n"
+    appender:
+      - type: 1
+        file: ./logs/sftest_system_log.txt
 
 system:
   port: 9191
