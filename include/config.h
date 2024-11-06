@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <boost/lexical_cast.hpp>
+#include <functional>
 #include <iostream>
 #include <list>
 #include <map>
@@ -76,7 +77,7 @@ public:
             {
                 ss.str(""); // reset
                 ss << item;
-                std::cout << "@@@@@@@@@@@...vector....item=" << item << std::endl;
+                // std::cout << "@@@@@@@@@@@...vector....item=" << item << std::endl;
                 vec.push_back(LexicalCast<std::string, T>()(ss.str()));
             }
         }
@@ -215,8 +216,8 @@ public:
             ss.str("");
             ss << n.second;
             std::string resstr = ss.str();
-            std::cout << "@@@@@@@@@@@...map..key=" << n.first << std::endl;
-            std::cout << "@@@@@@@@@@@...map..resstr=" << resstr << std::endl;
+            // std::cout << "@@@@@@@@@@@...map..key=" << n.first << std::endl;
+            // std::cout << "@@@@@@@@@@@...map..resstr=" << resstr << std::endl;
             map.insert(std::make_pair(n.first.as<std::string>(), LexicalCast<std::string, T>()(resstr)));
         }
 
@@ -232,6 +233,7 @@ class ConfigVar : public ConfigVarBase
     // friend std::ostream& operator<< (std::ostream&out, const ConfigVar<T> operand);
 public:
     typedef std::shared_ptr<ConfigVar<T>> ptr;
+    typedef std::function<void(const T& old_val, const T& new_val)> on_change_cb;
 
     ConfigVar(const std::string& name, const T& var_val, const std::string& description = "")
         : ConfigVarBase(name, description),
@@ -249,7 +251,7 @@ public:
             // return cast_val;
             // return m_name + "=" + boost::lexical_cast<std::string>(m_val);
             // return boost::lexical_cast<std::string>(m_val);
-            return ToStringFN()(m_val);
+            return ToStringFN()(getVal());
         }
         catch (std::exception& e)
         {
@@ -266,7 +268,7 @@ public:
         try
         {
             // m_val = boost::lexical_cast<T>(str);
-            m_val = FromStringFN()(str);
+            setVal(FromStringFN()(str));
             return true;
         }
         catch (const std::exception& e)
@@ -278,13 +280,39 @@ public:
         return false;
     }
 
+    void add_listener(const int key, const on_change_cb cb)
+    {
+        // m_cbs.insert(std::make_pair(key, cb));
+        m_cbs[key] = cb;
+    }
+
+    on_change_cb get_listener(const int key)
+    {
+        auto it = m_cbs.find(key);
+        return it == m_cbs.end() ? nullptr : it.second;
+    }
+
     T getVal() const
     {
         return m_val;
     }
 
+    void setVal(const T& val)
+    {
+        if (m_val == val)
+        {
+            return;
+        }
+        for (const auto& pair : m_cbs)
+        {
+            pair.second(m_val, val);
+        }
+        m_val = val;
+    }
+
 private:
     T m_val;
+    std::map<int, on_change_cb> m_cbs;
 };
 
 /**

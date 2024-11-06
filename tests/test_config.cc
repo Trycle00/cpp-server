@@ -96,6 +96,11 @@ public:
         return std::string();
     }
 
+    bool operator==(const Goods& goods) const
+    {
+        return m_name == goods.m_name && m_num == goods.m_num && m_price == goods.m_price;
+    }
+
     std::string get_name() { return m_name; }
     int get_num() { return m_num; }
     int get_price() { return m_price; }
@@ -149,8 +154,6 @@ public:
 };
 } // namespace trycle
 
-
-
 auto g_goods          = trycle ::Config::lookUp("test.class.goods", Goods());
 auto g_goods_map      = trycle ::Config::lookUp("test.class.goods_map", std::map<std::string, Goods>());
 auto g_goods_map_list = trycle ::Config::lookUp("test.class.goods_map_list", std::map<std::string, std::vector<Goods>>());
@@ -189,6 +192,12 @@ void TEST_LexicalCast_Class()
     }
 }
 
+void TEST_FunctionCB()
+{
+    g_goods->add_listener(10, [](const Goods& old_val, const Goods& new_val)
+                          { LOG_FMT_DEBUG(GET_ROOT_LOGGER, "OnChange | old_val=%s, new_val=%s", old_val.toString().c_str(), new_val.toString().c_str()); });
+}
+
 int main(int argc, char** argv)
 {
     printf("1======================\n");
@@ -207,6 +216,9 @@ int main(int argc, char** argv)
     printf("----------------------\n");
 
     // TEST_LexicalCast();
+
+    printf("----------------------\n");
+    TEST_FunctionCB();
 
     printf("----------------------\n");
 
