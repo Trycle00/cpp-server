@@ -30,4 +30,29 @@ test:
   int_map:
     k1: 1000
     k2: 2000
-  
+
+  class:
+    goods:
+      name: "g1"
+      num: 1
+      price: 2
+
+    goods_map:
+      gmk1:
+        name: gmmmmk1
+        num: 10
+        price: 20
+      gmk2:
+        name: gmmmmk2
+        num: 11
+        price: 222
+
+    goods_map_list:
+      listgmk1:
+        - name: listgmmmmk1
+          num: 100
+          price: 200
+        - name: listgmmmmk2
+          num: 111
+          price: 2222
+    

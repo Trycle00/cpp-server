@@ -76,6 +76,7 @@ public:
             {
                 ss.str(""); // reset
                 ss << item;
+                std::cout << "@@@@@@@@@@@...vector....item=" << item << std::endl;
                 vec.push_back(LexicalCast<std::string, T>()(ss.str()));
             }
         }
@@ -189,7 +190,6 @@ public:
         YAML::Node node;
         for (const auto& it : map)
         {
-            std::cout << "@@@@@@@@@@@@@@@11 resstr=" << it.second << std::endl;
             node.push_back(YAML::Load(LexicalCast<T, std::string>()(it.second)));
         }
 
@@ -215,7 +215,8 @@ public:
             ss.str("");
             ss << n.second;
             std::string resstr = ss.str();
-            std::cout << "@@@@@@@@@@@@@@@22 resstr=" << resstr << std::endl;
+            std::cout << "@@@@@@@@@@@...map..key=" << n.first << std::endl;
+            std::cout << "@@@@@@@@@@@...map..resstr=" << resstr << std::endl;
             map.insert(std::make_pair(n.first.as<std::string>(), LexicalCast<std::string, T>()(resstr)));
         }
 
