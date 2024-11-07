@@ -238,7 +238,7 @@ public:
         config.type = node["type"].as<int>();
         if (node["level"])
         {
-            config.level = static_cast<LogLevel::Level>(node["level"].as<int>());
+            config.level = LogLevel::FromString(node["level"].as<std::string>()); // static_cast<LogLevel::Level>(node["level"].as<int>());
         }
         if (node["file"])
         {
@@ -257,7 +257,7 @@ public:
         YAML::Node node;
 
         node["type"]  = config.type;
-        node["level"] = (int)config.level;
+        node["level"] = LogLevel::ToString(config.level); // (int)config.level;
         node["file"]  = config.file;
 
         std::stringstream ss;
@@ -276,7 +276,7 @@ public:
         LogConfig log_config;
         log_config.name      = node["name"].as<std::string>();
         log_config.formatter = node["formatter"].as<std::string>();
-        log_config.level     = static_cast<LogLevel::Level>(node["level"].as<int>());
+        log_config.level     = LogLevel::FromString(node["level"].as<std::string>()); // <LogLevel::Level>(node["level"].as<int>());
         auto appender        = node["appender"];
         if (appender)
         {
@@ -299,7 +299,7 @@ public:
         std::stringstream ss;
 
         node["name"]  = config.name;
-        node["level"] = 1; // TODO config.level;
+        node["level"] = LogLevel::ToString(config.level); // config.level;
         node["name"]  = config.formatter;
 
         // if (config.appenders)

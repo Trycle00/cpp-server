@@ -155,7 +155,7 @@ thread_local static std::map<char, LogFormatter::FormatItem::ptr>
 #undef MAKE_FORMAT_ITEM
     };
 
-const std::string LogLevel::ToString(LogLevel::Level level)
+const std::string LogLevel::ToString(const LogLevel::Level& level)
 {
     switch (level)
     {
@@ -169,10 +169,27 @@ const std::string LogLevel::ToString(LogLevel::Level level)
         LEVEL_TO_STRING(ERROR);
         LEVEL_TO_STRING(FATAL);
 #undef LEVEL_TO_STRING
-        default:
-            return "UNKNOWN";
     }
     return "UNKNOWN";
+}
+
+const LogLevel::Level LogLevel::FromString(const std::string& str)
+{
+    std::string upper = str;
+    std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+#define LEVEL_FROM_STRING(LEVEL) \
+    if (upper == #LEVEL)         \
+    {                            \
+        return LogLevel::LEVEL;  \
+    }
+
+    LEVEL_FROM_STRING(DEBUG);
+    LEVEL_FROM_STRING(INFO);
+    LEVEL_FROM_STRING(WARN);
+    LEVEL_FROM_STRING(ERROR);
+    LEVEL_FROM_STRING(FATAL);
+
+    return LogLevel::UNKNOWN;
 }
 
 LogEvent::LogEvent(const std::string filename,
@@ -266,13 +283,15 @@ void StdoutAppender::log(LogLevel::Level level, LogEvent::ptr event)
 
 FileAppender::FileAppender(const std::string& filename) : m_filename(filename)
 {
+    reopen();
 }
 
 void FileAppender::log(LogLevel::Level level, LogEvent::ptr event)
 {
     if (m_level <= event->getLevel())
     {
-        m_formatter->format(event);
+        m_filestream << m_formatter->format(event);
+        m_filestream.flush();
     }
 }
 
@@ -283,7 +302,7 @@ bool FileAppender::reopen()
         m_filestream.close();
     }
 
-    m_filestream.open(m_filename);
+    m_filestream.open(m_filename, std::ios_base::out | std::ios_base::app);
     return !!m_filestream;
 }
 
@@ -408,9 +427,10 @@ void __LoggerManager::init(const std::set<LogConfig>& log_configs)
     // for (const auto& log_config : log_configs->getVal())
     for (const auto& log_config : log_configs)
     {
-        auto logger                  = makeLogger(log_config);
+        auto logger = makeLogger(log_config);
+        // m_logger_map.erase(logger->m_name);
         m_logger_map[logger->m_name] = logger;
-        
+
         if (logger->m_name == "root")
         {
             m_root = logger;

@@ -49,6 +49,8 @@
 #define LOG_FMT_ERROR(logger, format, argv...) LOG_FMT_LEVEL(logger, trycle::LogLevel::ERROR, format, argv)
 #define LOG_FMT_FATAL(logger, format, argv...) LOG_FMT_LEVEL(logger, trycle::LogLevel::FATAL, format, argv)
 
+#define LOG_GET(name) trycle::LoggerManager::GetSingleton()->getLogger(name)
+
 #define GET_ROOT_LOGGER trycle::LoggerManager::GetSingleton()->getRoot()
 
 namespace trycle
@@ -70,7 +72,8 @@ public:
         FATAL   = 5,
     };
 
-    static const std::string ToString(LogLevel::Level level);
+    static const std::string ToString(const LogLevel::Level& level);
+    static const LogLevel::Level FromString(const std::string& level);
 };
 
 struct LogAppenderConfig
@@ -119,7 +122,6 @@ struct LogConfig
         return out;
     }
 };
-
 
 // 日志事件
 class LogEvent
@@ -303,7 +305,8 @@ public:
         return m_root;
     }
 
-    void init(const std::set<LogConfig> & log_configs);
+    void init(const std::set<LogConfig>& log_configs);
+
 private:
     std::map<std::string, Logger::ptr> m_logger_map;
     Logger::ptr m_root;
