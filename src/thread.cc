@@ -30,6 +30,7 @@ void Semaphore::wait()
 
 void Semaphore::notify()
 {
+
     int result = sem_post(&m_semaphore);
     if (result)
     {

@@ -1,3 +1,4 @@
+
 #ifndef TRY_LOGGER_H
 #define TRY_LOGGER_H
 
@@ -16,6 +17,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "singleton.h"
+#include "thread.h"
 #include "util.h"
 // #include "config.h"
 
@@ -55,6 +57,8 @@
 
 namespace trycle
 {
+
+// class Mutex;
 
 // 日志级别
 class LogLevel
@@ -160,6 +164,8 @@ private:
 // 日志格式器
 class LogFormatter
 {
+    friend class Logger;
+
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
 
@@ -178,11 +184,14 @@ private:
 
     std::string m_pattern;                           // 日志格式
     std::vector<FormatItem::ptr> m_format_item_list; // 格式项列表
+    Mutex m_mutex;
 };
 
 // 日志输出器
 class LogAppender
 {
+    friend class Logger;
+
 public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender() {}
@@ -198,6 +207,7 @@ public:
 protected:
     LogLevel::Level m_level;
     LogFormatter::ptr m_formatter;
+    Mutex m_mutex;
 };
 
 // 日志器
@@ -261,6 +271,7 @@ private:
     LogFormatter::ptr m_log_formatter;
     std::list<LogAppender::ptr> m_appenders; // Appender集合
     Logger::ptr m_root;                      // root logger use as default
+    Mutex m_mutex;
 };
 
 // 定义输出到控制台的Appender
@@ -290,6 +301,7 @@ public:
 private:
     std::string m_filename;
     std::fstream m_filestream;
+    Mutex m_mutex;
 };
 
 // 日志管理类
@@ -311,6 +323,7 @@ public:
 private:
     std::map<std::string, Logger::ptr> m_logger_map;
     Logger::ptr m_root;
+    Mutex m_mutex;
 };
 
 typedef SingletonPtr<__LoggerManager> LoggerManager;

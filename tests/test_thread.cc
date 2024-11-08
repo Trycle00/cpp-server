@@ -5,7 +5,8 @@
 #include <vector>
 
 int counter = 0;
-trycle::RWMutex s_mutex;
+trycle::RWMutex s_rw_mutex;
+trycle::Mutex s_mutex;
 
 void test_fun1()
 {
@@ -18,7 +19,8 @@ void test_fun1()
 
     for (int i = 0; i < 10000000; i++)
     {
-        trycle::RWMutex::WriteLock lock(s_mutex);
+        // trycle::RWMutex::WriteLock lock(s_rw_mutex);
+        trycle::Mutex::Lock lock(s_mutex);
         counter++;
     }
 }
