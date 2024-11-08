@@ -1,5 +1,7 @@
 include_directories(../src)
 
+add_definitions("-O0 -g -ggdb -Wno-unused-variable")
+
 file(GLOB CPP_SRC_LIST *.cc)
 
 foreach(v ${CPP_SRC_LIST})

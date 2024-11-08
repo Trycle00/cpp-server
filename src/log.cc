@@ -210,6 +210,12 @@ LogEvent::LogEvent(const std::string filename,
 {
 }
 
+Logger::Logger(const std::string& name)
+    : m_name(name),
+      m_level(LogLevel::Level::DEBUG)
+{
+}
+
 Logger::Logger(const std::string& name,
                LogLevel::Level level,
                LogFormatter::ptr log_formatter)
@@ -223,10 +229,16 @@ void Logger::log(LogEvent::ptr event)
 {
     if (m_level <= event->getLevel())
     {
-        for (auto& it : m_appenders)
+        if (!m_appenders.empty())
         {
-
-            it->log(event->getLevel(), event);
+            for (auto& it : m_appenders)
+            {
+                it->log(event->getLevel(), event);
+            }
+        }
+        else if (m_root && m_root.get() != this)
+        {
+            m_root->log(event);
         }
     }
 }
@@ -467,8 +479,9 @@ Logger::ptr __LoggerManager::getLogger(const std::string logger_name)
     {
         return itor->second;
     }
-    const Logger::ptr logger = std::make_shared<Logger>(logger_name, m_root->getLevel(), m_root->getLogFormater());
-    logger->setLogAppenders(m_root->getLogAppenders());
+
+    const Logger::ptr logger = std::make_shared<Logger>(logger_name);
+    logger->m_root           = m_root;
 
     m_logger_map.insert({logger_name, logger});
 

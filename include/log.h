@@ -15,7 +15,6 @@
 #include <vector>
 #include <yaml-cpp/yaml.h>
 
-#include "magic_enum.hpp"
 #include "singleton.h"
 #include "util.h"
 // #include "config.h"
@@ -52,6 +51,7 @@
 #define LOG_GET(name) trycle::LoggerManager::GetSingleton()->getLogger(name)
 
 #define GET_ROOT_LOGGER trycle::LoggerManager::GetSingleton()->getRoot()
+#define GET_LOGGER(name) trycle::LoggerManager::GetSingleton()->getLogger(name)
 
 namespace trycle
 {
@@ -207,6 +207,7 @@ class Logger
 
 public:
     typedef std::shared_ptr<Logger> ptr;
+    Logger(const std::string& name);
     Logger(const std::string& name, LogLevel::Level level, LogFormatter::ptr log_formatter);
     void log(LogEvent::ptr event);
     // void log(LogLevel::Level level, LogEvent::ptr event);
@@ -259,7 +260,7 @@ private:
     LogLevel::Level m_level = LogLevel::DEBUG; // 日志级别
     LogFormatter::ptr m_log_formatter;
     std::list<LogAppender::ptr> m_appenders; // Appender集合
-    // Logger::ptr m_root;                      // root logger use as default
+    Logger::ptr m_root;                      // root logger use as default
 };
 
 // 定义输出到控制台的Appender
