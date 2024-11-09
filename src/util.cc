@@ -1,5 +1,7 @@
 #include "util.h"
 
+#include <execinfo.h>
+#include <sstream>
 #include <thread>
 #if _WIN32
 #else
@@ -7,8 +9,12 @@
 #include <unistd.h>
 #endif
 
+#include "log.h"
+
 namespace trycle
 {
+
+static Logger::ptr g_logger = GET_LOGGER("system");
 
 uint64_t GetThreadId()
 {
@@ -35,6 +41,57 @@ uint64_t GetThreadId()
 uint64_t GetFiberId()
 {
     return 0;
+}
+
+void Backtrace(std::vector<std::string>& vec, int size, int skip)
+{
+    void** array   = (void**)malloc(sizeof(void*) * size);
+    size_t nptrs   = ::backtrace(array, size);
+
+    char** strings = ::backtrace_symbols(array, nptrs);
+    if (strings == nullptr)
+    {
+        LOG_ERROR(g_logger, "backtrace_symbols() error");
+        throw std::exception();
+    }
+
+    for (int i = skip; i < nptrs; i++)
+    {
+        vec.push_back(strings[i]);
+    }
+
+    free(strings);
+    free(array);
+}
+
+std::string BacktraceXX(const int size, const int skip, const std::string& prefix)
+{
+    static int BT_SIZE = 64;
+    void* bt_info[BT_SIZE];
+
+    size_t bt_size = backtrace(bt_info, BT_SIZE);
+
+    std::ostringstream ss;
+    for (int i = 0; i < bt_size; i++)
+    {
+        ss << bt_info[i] << "\n";
+    }
+    std::string str = ss.str();
+    return str;
+}
+
+std::string Backtrace(const int size, const int skip, const std::string& prefix)
+{
+    std::vector<std::string> vec;
+    Backtrace(vec, size, skip);
+
+    std::stringstream ss;
+    for (const auto& str : vec)
+    {
+        ss << prefix << str << "\n";
+    }
+
+    return ss.str();
 }
 
 } // namespace trycle

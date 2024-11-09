@@ -4,7 +4,7 @@
 namespace trycle
 {
 
-Logger::ptr g_logger = GET_LOGGER("system");
+static Logger::ptr g_logger = GET_LOGGER("system");
 
 // static thread_local pid_t g_pid = 0;
 static thread_local Thread* t_thread          = nullptr;
