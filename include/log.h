@@ -168,6 +168,7 @@ class LogFormatter
 
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
+    typedef SpinMutex MutexType;
 
     class FormatItem
     {
@@ -184,7 +185,7 @@ private:
 
     std::string m_pattern;                           // 日志格式
     std::vector<FormatItem::ptr> m_format_item_list; // 格式项列表
-    Mutex m_mutex;
+    MutexType m_mutex;
 };
 
 // 日志输出器
@@ -194,6 +195,8 @@ class LogAppender
 
 public:
     typedef std::shared_ptr<LogAppender> ptr;
+    typedef SpinMutex MutexType;
+
     virtual ~LogAppender() {}
 
     virtual void log(LogLevel::Level level, LogEvent::ptr event) = 0;
@@ -207,7 +210,7 @@ public:
 protected:
     LogLevel::Level m_level;
     LogFormatter::ptr m_formatter;
-    Mutex m_mutex;
+    MutexType m_mutex;
 };
 
 // 日志器
@@ -217,6 +220,8 @@ class Logger
 
 public:
     typedef std::shared_ptr<Logger> ptr;
+    typedef SpinMutex MutexType;
+
     Logger(const std::string& name);
     Logger(const std::string& name, LogLevel::Level level, LogFormatter::ptr log_formatter);
     void log(LogEvent::ptr event);
@@ -271,7 +276,7 @@ private:
     LogFormatter::ptr m_log_formatter;
     std::list<LogAppender::ptr> m_appenders; // Appender集合
     Logger::ptr m_root;                      // root logger use as default
-    Mutex m_mutex;
+    MutexType m_mutex;
 };
 
 // 定义输出到控制台的Appender
@@ -290,6 +295,7 @@ class FileAppender : public LogAppender
 {
 public:
     typedef std::shared_ptr<FileAppender> ptr;
+    typedef SpinMutex MutexType;
 
     FileAppender(const std::string& fileName);
 
@@ -301,7 +307,7 @@ public:
 private:
     std::string m_filename;
     std::fstream m_filestream;
-    Mutex m_mutex;
+    MutexType m_mutex;
 };
 
 // 日志管理类
@@ -309,6 +315,8 @@ class __LoggerManager
 {
 public:
     typedef std::shared_ptr<__LoggerManager> ptr;
+    typedef SpinMutex MutexType;
+
     __LoggerManager();
 
     Logger::ptr getLogger(const std::string logger_name);
@@ -323,7 +331,7 @@ public:
 private:
     std::map<std::string, Logger::ptr> m_logger_map;
     Logger::ptr m_root;
-    Mutex m_mutex;
+    MutexType m_mutex;
 };
 
 typedef SingletonPtr<__LoggerManager> LoggerManager;

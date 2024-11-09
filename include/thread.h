@@ -1,6 +1,7 @@
 #ifndef TRY_THREAD_H
 #define TRY_THREAD_H
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <pthread.h>
@@ -11,6 +12,7 @@
 namespace trycle
 {
 
+// 信号量
 class Semaphore
 {
 public:
@@ -23,6 +25,7 @@ private:
     sem_t m_semaphore;
 };
 
+// 锁--实现类
 template <typename T>
 class ScopedLockImpl
 {
@@ -59,6 +62,7 @@ private:
     bool m_locked;
 };
 
+// 读锁--实现类
 template <typename T>
 class ReadScopedLockImpl
 {
@@ -95,6 +99,7 @@ private:
     bool m_locked;
 };
 
+// 写锁--实现类
 template <typename T>
 class WriteScopedLockImpl
 {
@@ -132,6 +137,7 @@ private:
     bool m_locked;
 };
 
+// 互斥量--锁
 class Mutex
 {
 public:
@@ -161,6 +167,17 @@ private:
     pthread_mutex_t m_mutex;
 };
 
+class NullMutex
+{
+public:
+    typedef ScopedLockImpl<NullMutex> Lock;
+    NullMutex() {}
+    ~NullMutex() {}
+    void lock() {}
+    void unlock() {}
+};
+
+// 互斥量--读写锁
 class RWMutex
 {
 public:
@@ -195,6 +212,88 @@ private:
     pthread_rwlock_t m_lock;
 };
 
+class NullRWMutex
+{
+
+public:
+    typedef ReadScopedLockImpl<NullRWMutex> ReadLock;
+
+    typedef WriteScopedLockImpl<NullRWMutex> WriteLock;
+    NullRWMutex() {}
+    ~NullRWMutex() {}
+    void rdlock() {}
+    void wrlock() {}
+    void unlock() {}
+};
+
+class SpinMutex
+{
+public:
+    typedef ScopedLockImpl<SpinMutex> Lock;
+
+    SpinMutex()
+    {
+        pthread_spin_init(&m_lock, 0);
+    }
+    ~SpinMutex()
+    {
+        pthread_spin_destroy(&m_lock);
+    }
+
+    void lock()
+    {
+        pthread_spin_lock(&m_lock);
+    }
+    void unlock()
+    {
+        pthread_spin_unlock(&m_lock);
+    }
+
+private:
+    pthread_spinlock_t m_lock;
+};
+
+// class CASMutex
+// {
+//     static const int UNLOCK = 0;
+//     static const int LOCKED = 1;
+
+// public:
+//     typedef ScopedLockImpl<CASMutex> Lock;
+
+//     CASMutex()
+//     {
+//         m_value.store(LOCKED);
+//     }
+
+//     ~CASMutex()
+//     {
+//         unlock();
+//     }
+
+//     void lock()
+//     {
+//         while (true)
+//         {
+
+//             int expected = UNLOCK;
+//             if (m_value.compare_exchange_strong(expected, LOCKED))
+//             {
+//                 break;
+//             }
+//         }
+//     }
+
+//     void unlock()
+//     {
+//         m_value.store(UNLOCK);
+//     }
+
+// private:
+//     std::atomic<int> m_value;
+// };
+
+// 线程类
 class Thread
 {
 public:

@@ -1,6 +1,7 @@
 #include "initialize.h"
 #include "log.h"
 #include "thread.h"
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,21 @@ void test_fun1()
     }
 }
 
+void test_fun2()
+{
+    auto start = std::chrono::steady_clock::now();
+    while (true)
+    {
+        LOG_DEBUG(GET_ROOT_LOGGER, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        auto end    = std::chrono::steady_clock::now();
+        auto elapse = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        if (elapse.count() >= 300000)
+        {
+            break;
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     trycle ::initialize();
@@ -34,8 +50,10 @@ int main(int argc, char** argv)
     std::vector<trycle::Thread::ptr> threads;
     for (size_t i = 0; i < 5; i++)
     {
-        auto thread = std::make_shared<trycle::Thread>("name-" + std::to_string(i), &test_fun1);
-        threads.push_back(thread);
+        // auto thread  = std::make_shared<trycle::Thread>("name-" + std::to_string(i), &test_fun1);
+        // threads.push_back(thread);
+        auto thread2 = std::make_shared<trycle::Thread>("mutex-" + std::to_string(i), &test_fun2);
+        threads.push_back(thread2);
     }
 
     for (const auto& item : threads)
