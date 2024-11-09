@@ -1,6 +1,8 @@
 #ifndef TRY_MACRO_H
 #define TRY_MACRO_H
 
+#include <assert.h>
+
 #include "log.h"
 #include "util.h"
 
@@ -12,6 +14,7 @@
                       trycle::Backtrace(20, 1, "    ").c_str() \
                                                                \
         );                                                     \
+        assert(x);                                             \
     }
 
 #define ASSERT_M(x, m)                                         \
@@ -22,6 +25,7 @@
                       trycle::Backtrace(20, 1, "    ").c_str() \
                                                                \
         );                                                     \
+        assert(x);                                             \
     }
 
 #endif // TRY_MACRO_H

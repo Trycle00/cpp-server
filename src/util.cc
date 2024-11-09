@@ -9,6 +9,7 @@
 #include <unistd.h>
 #endif
 
+#include "fiber.h"
 #include "log.h"
 
 namespace trycle
@@ -40,7 +41,7 @@ uint64_t GetThreadId()
 
 uint64_t GetFiberId()
 {
-    return 0;
+    return trycle::Fiber::GetFiberId();
 }
 
 void Backtrace(std::vector<std::string>& vec, int size, int skip)
