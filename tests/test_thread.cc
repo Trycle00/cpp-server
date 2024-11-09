@@ -21,7 +21,7 @@ void test_fun1()
     for (int i = 0; i < 10000000; i++)
     {
         // trycle::RWMutex::WriteLock lock(s_rw_mutex);
-        trycle::Mutex::Lock lock(s_mutex);
+        trycle::Mutex::Lock lock(&s_mutex);
         counter++;
     }
 }
@@ -34,7 +34,7 @@ void test_fun2()
         LOG_DEBUG(GET_ROOT_LOGGER, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         auto end    = std::chrono::steady_clock::now();
         auto elapse = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-        if (elapse.count() >= 300000)
+        if (elapse.count() >= 1000)
         {
             break;
         }

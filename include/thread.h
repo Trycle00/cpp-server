@@ -30,10 +30,10 @@ template <typename T>
 class ScopedLockImpl
 {
 public:
-    ScopedLockImpl(T& mutex)
+    ScopedLockImpl(T* mutex)
         : m_mutex(mutex)
     {
-        m_mutex.lock();
+        m_mutex->lock();
         m_locked = true;
     }
 
@@ -46,19 +46,19 @@ public:
     {
         if (!m_locked)
         {
-            m_mutex.lock();
+            m_mutex->lock();
         }
     }
     void unlock()
     {
         if (m_locked)
         {
-            m_mutex.unlock();
+            m_mutex->unlock();
         }
     }
 
 private:
-    T& m_mutex;
+    T* m_mutex;
     bool m_locked;
 };
 
@@ -67,10 +67,10 @@ template <typename T>
 class ReadScopedLockImpl
 {
 public:
-    ReadScopedLockImpl(T& mutex)
+    ReadScopedLockImpl(T* mutex)
         : m_mutex(mutex)
     {
-        m_mutex.rdlock();
+        m_mutex->rdlock();
         m_locked = true;
     }
 
@@ -83,19 +83,19 @@ public:
     {
         if (!m_locked)
         {
-            m_mutex.rdlock();
+            m_mutex->rdlock();
         }
     }
     void unlock()
     {
         if (m_locked)
         {
-            m_mutex.unlock();
+            m_mutex->unlock();
         }
     }
 
 private:
-    T& m_mutex;
+    T* m_mutex;
     bool m_locked;
 };
 
@@ -104,10 +104,10 @@ template <typename T>
 class WriteScopedLockImpl
 {
 public:
-    WriteScopedLockImpl(T& mutex)
+    WriteScopedLockImpl(T* mutex)
         : m_mutex(mutex)
     {
-        m_mutex.wrlock();
+        m_mutex->wrlock();
         m_locked = true;
     }
 
@@ -120,7 +120,7 @@ public:
     {
         if (!m_locked)
         {
-            m_mutex.wrlock();
+            m_mutex->wrlock();
         }
     }
 
@@ -128,12 +128,12 @@ public:
     {
         if (m_locked)
         {
-            m_mutex.unlock();
+            m_mutex->unlock();
         }
     }
 
 private:
-    T& m_mutex;
+    T* m_mutex;
     bool m_locked;
 };
 

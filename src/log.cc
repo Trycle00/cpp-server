@@ -227,7 +227,7 @@ Logger::Logger(const std::string& name,
 
 void Logger::log(LogEvent::ptr event)
 {
-    MutexType::Lock lock(m_mutex);
+    MutexType::Lock lock(&m_mutex);
     if (m_level <= event->getLevel())
     {
         if (!m_appenders.empty())
@@ -267,10 +267,10 @@ void Logger::log(LogEvent::ptr event)
 
 void Logger::addAppender(LogAppender::ptr appender)
 {
-    MutexType::Lock lock(m_mutex);
+    MutexType::Lock lock(&m_mutex);
     if (!appender->getFormatter())
     {
-        MutexType::Lock alock(appender->m_mutex);
+        MutexType::Lock alock(&(appender->m_mutex));
         appender->setFormatter(m_log_formatter);
     }
 
@@ -279,7 +279,7 @@ void Logger::addAppender(LogAppender::ptr appender)
 
 void Logger::delAppender(LogAppender::ptr appender)
 {
-    MutexType::Lock lock(m_mutex);
+    MutexType::Lock lock(&m_mutex);
     for (auto it = m_appenders.begin(), end = m_appenders.end(); it != end; ++it)
     {
         if (*it == appender)
@@ -293,7 +293,7 @@ void StdoutAppender::log(LogLevel::Level level, LogEvent::ptr event)
 {
     if (m_level <= level)
     {
-        MutexType::Lock lock(m_mutex);
+        MutexType::Lock lock(&m_mutex);
         std::cout << m_formatter->format(event);
     }
 }
@@ -307,7 +307,7 @@ void FileAppender::log(LogLevel::Level level, LogEvent::ptr event)
 {
     if (m_level <= event->getLevel())
     {
-        MutexType::Lock lock(m_mutex);
+        MutexType::Lock lock(&m_mutex);
         m_filestream << m_formatter->format(event);
         m_filestream.flush();
     }
@@ -315,7 +315,7 @@ void FileAppender::log(LogLevel::Level level, LogEvent::ptr event)
 
 bool FileAppender::reopen()
 {
-    MutexType::Lock lock(m_mutex);
+    MutexType::Lock lock(&m_mutex);
     if (!m_filestream)
     {
         m_filestream.close();
@@ -356,7 +356,7 @@ void LogFormatter::init()
 
     for (size_t i = 0, size = m_pattern.length(); i < size; i++)
     {
-        MutexType::Lock lock(m_mutex);
+        MutexType::Lock lock(&m_mutex);
         switch (proc_status)
         {
             case SCAN_STATUS:
@@ -439,7 +439,7 @@ Logger::ptr makeLogger(const LogConfig& config)
 
 void __LoggerManager::init(const std::set<LogConfig>& log_configs)
 {
-    MutexType::Lock lock(m_mutex);
+    MutexType::Lock lock(&m_mutex);
     // auto log_configs = Config::lookUp("logs", std::set<LogConfig>());
     // Config::loadFromYAML(YAML::LoadFile("../conf/config.yaml"));
 

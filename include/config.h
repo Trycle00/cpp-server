@@ -18,12 +18,15 @@
 namespace trycle
 {
 
+using RWMutexType = RWMutex;
+using ReadLock    = RWMutexType::ReadLock;
+using WriteLock   = RWMutexType::WriteLock;
+
 class ConfigVarBase
 {
 
 public:
     typedef std::shared_ptr<ConfigVarBase> ptr;
-    typedef RWMutex RWMutexType;
 
     ConfigVarBase(const std::string& name,
                   const std::string& var_description = "")
@@ -32,10 +35,10 @@ public:
     {
     }
 
-    virtual std::string toString()                  = 0;
+    virtual std::string toString() const            = 0;
     virtual bool fromString(const std::string& str) = 0;
 
-    std::string get_var_name()
+    std::string get_var_name() const
     {
         return m_name;
     }
@@ -43,7 +46,7 @@ public:
 protected:
     std::string m_name;
     std::string m_var_description;
-    RWMutexType m_mutex;
+    mutable RWMutexType m_mutex;
 };
 
 /**
@@ -339,7 +342,7 @@ public:
     }
 
     // template <typename M>
-    std::string toString() override
+    std::string toString() const override
     {
         try
         {
@@ -379,35 +382,35 @@ public:
 
     void add_listener(const int key, const on_change_cb cb)
     {
-        RWMutexType::WriteLock lock(m_mutex);
+        RWMutexType::WriteLock lock(&m_mutex);
         // m_cbs.insert(std::make_pair(key, cb));
         m_cbs[key] = cb;
     }
 
     on_change_cb get_listener(const int key)
     {
-        RWMutexType::ReadLock lock(m_mutex);
+        ReadLock lock(&m_mutex);
         auto it = m_cbs.find(key);
         return it == m_cbs.end() ? nullptr : it.second;
     }
 
-    const T getVal()
+    T getVal() const
     {
-        RWMutexType::ReadLock lock(m_mutex);
+        ReadLock lock(&m_mutex);
         return m_val;
     }
 
     void setVal(const T& val)
     {
         {
-            RWMutexType::ReadLock lock(m_mutex);
+            ReadLock lock(&m_mutex);
             if (m_val == val)
             {
                 return;
             }
         }
 
-        RWMutexType::WriteLock lock(m_mutex);
+        RWMutexType::WriteLock lock(&m_mutex);
         for (const auto& pair : m_cbs)
         {
             pair.second(m_val, val);
@@ -428,11 +431,10 @@ class Config
 public:
     typedef std::shared_ptr<Config> ptr;
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
-    typedef RWMutex RWMutexType;
 
     static ConfigVarBase::ptr lookUp(const std::string& var_name)
     {
-        RWMutexType::ReadLock lock(get_mutex());
+        ReadLock lock(get_mutex());
         ConfigVarMap& var_map = getDatas();
         auto itor             = var_map.find(var_name);
         if (itor != var_map.end())
@@ -546,10 +548,10 @@ private:
         return m_datas;
     }
 
-    static RWMutexType& get_mutex()
+    static RWMutexType* get_mutex()
     {
         static RWMutexType g_mutex;
-        return g_mutex;
+        return &g_mutex;
     }
 };
 
