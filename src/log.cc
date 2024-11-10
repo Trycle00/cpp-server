@@ -449,8 +449,19 @@ void __LoggerManager::init(const std::set<LogConfig>& log_configs)
     for (const auto& log_config : log_configs)
     {
         auto logger = makeLogger(log_config);
-        // m_logger_map.erase(logger->m_name);
-        m_logger_map[logger->m_name] = logger;
+
+        auto itor   = m_logger_map.find(logger->m_name);
+        if (itor != m_logger_map.end())
+        {
+            auto exist_logger = itor->second;
+            exist_logger->setLevel(logger->getLevel());
+            exist_logger->setLogAppenders(logger->getLogAppenders());
+            exist_logger->setLogFormater(logger->getLogFormater());
+        }
+        else
+        {
+            m_logger_map[logger->m_name] = logger;
+        }
 
         if (logger->m_name == "root")
         {

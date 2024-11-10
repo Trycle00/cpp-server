@@ -174,17 +174,20 @@ class LexicalCast<std::string, std::set<T>>
 public:
     std::set<T> operator()(const std::string& str)
     {
-        std::set<T> list;
+        std::set<T> config_set;
         YAML::Node node = YAML::Load(str);
-        std::stringstream ss;
-        for (const auto& n : node)
+        if (node.IsSequence())
         {
-            ss.str("");
-            ss << n;
-            list.insert(LexicalCast<std::string, T>()(ss.str()));
+            std::stringstream ss;
+            for (const auto& n : node)
+            {
+                ss.str("");
+                ss << n;
+                std::string nstr = ss.str();
+                config_set.insert(LexicalCast<std::string, T>()(nstr));
+            }
         }
-
-        return list;
+        return config_set;
     }
 };
 
@@ -288,7 +291,8 @@ public:
         {
             std::stringstream ss;
             ss << appender;
-            log_config.appenders = LexicalCast<std::string, std::set<LogAppenderConfig>>()(ss.str());
+            std::string nstr     = ss.str();
+            log_config.appenders = LexicalCast<std::string, std::set<LogAppenderConfig>>()(nstr);
         }
         return log_config;
     }
@@ -503,7 +507,6 @@ public:
             auto var = lookUp(key);
             if (var)
             {
-
                 std::stringstream ss;
                 ss << pair.second;
                 std::string strRes = ss.str();

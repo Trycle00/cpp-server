@@ -10,7 +10,7 @@ namespace trycle
 
 uint64_t GetThreadId();
 
-uint64_t GetFiberId();
+uint32_t GetFiberId();
 
 void Backtrace(const std::vector<std::string>& strings, int size, int skip);
 

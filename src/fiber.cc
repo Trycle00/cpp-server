@@ -11,7 +11,7 @@ namespace trycle
 
 static Logger::ptr logger = GET_LOGGER("system");
 
-static std::atomic<uint64_t> t_fiber_id{0};
+static std::atomic<uint32_t> t_fiber_id{0};
 static std::atomic<uint64_t> t_fiber_count{0};
 
 static thread_local Fiber* t_fiber = nullptr;
@@ -36,6 +36,7 @@ using StackAlloc = StackAllocator;
 
 Fiber::Fiber()
 {
+    LOG_FMT_DEBUG(logger, "Fiber init id=%d", m_id);
     m_state = EXEC;
     SetThis(this);
     if (getcontext(&m_ctx))
@@ -47,27 +48,27 @@ Fiber::Fiber()
 
 Fiber::Fiber(FiberCb cb, size_t stack_size)
     : m_id(++t_fiber_id),
-      m_cb(cb)
+      m_cb(std::move(cb))
 {
-    ++t_fiber_count;
+    LOG_FMT_DEBUG(logger, "Fiber init id=%d", m_id);
     m_stack_size = m_stack_size ? m_stack_size : g_fiber_stack_size->getVal();
 
-    m_stack      = StackAlloc::alloc(m_stack_size);
     if (getcontext(&m_ctx))
     {
         ASSERT_M(false, "getcontext error.");
     }
 
+    m_stack                = StackAlloc::alloc(m_stack_size);
     m_ctx.uc_link          = nullptr;
     m_ctx.uc_stack.ss_sp   = m_stack;
     m_ctx.uc_stack.ss_size = m_stack_size;
 
     makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    ++t_fiber_count;
 }
 
 Fiber::~Fiber()
 {
-    LOG_DEBUG(logger, "Fiber distructure...start..");
     --t_fiber_count;
     if (m_stack)
     {
@@ -87,7 +88,8 @@ Fiber::~Fiber()
             SetThis(nullptr);
         }
     }
-    LOG_DEBUG(logger, "Fiber distructure......end");
+
+    LOG_FMT_DEBUG(logger, "Fiber destroy id=%d, t_fiber_count=%ld", m_id, t_fiber_count.load());
 }
 
 // 重置协程的函数，并设置为INIT或TERM状态
@@ -98,7 +100,7 @@ void Fiber::reset(FiberCb cb)
                  m_state == TERM ||
                  m_state == EXCEPT,
              "invalid state to reset.");
-    SetThis(this);
+    // SetThis(this);
     m_cb = cb;
 
     if (getcontext(&m_ctx))
@@ -116,8 +118,8 @@ void Fiber::reset(FiberCb cb)
 // 切换到协程执行
 void Fiber::swap_in()
 {
-    SetThis(this);
     ASSERT(m_state != EXEC);
+    SetThis(this);
 
     m_state = EXEC;
     if (swapcontext(&t_thread_fiber->m_ctx, &m_ctx))
@@ -139,14 +141,15 @@ void Fiber::swap_out()
 // 获取当前协程
 Fiber::ptr Fiber::GetThis()
 {
-    if (!(t_fiber))
+    if (t_fiber)
     {
-        // init main fiber
-        Fiber::ptr main_fiber(new Fiber());
-        ASSERT(main_fiber.get() == t_fiber)
-        t_thread_fiber = main_fiber;
+        return t_fiber->shared_from_this();
     }
-    return t_fiber->shared_from_this();
+    // init main fiber
+    Fiber::ptr main_fiber(new Fiber());
+    ASSERT(main_fiber.get() == t_fiber)
+    t_thread_fiber = main_fiber;
+    return t_thread_fiber->shared_from_this();
 }
 // 设置当前协程
 void Fiber::SetThis(Fiber* ptr)
@@ -180,27 +183,40 @@ uint64_t Fiber::TotalFibers()
 void Fiber::MainFunc()
 {
     Fiber::ptr cur = GetThis();
+    std::cout << "11@@@@@@@@@@@@@@@@@@@@" << cur->get_id() << "@@@@@@@@@@@@@@@@@@@@@\n";
     ASSERT(cur);
 
     try
     {
+        std::cout << "cc1@@@@@@@@@@@@@@@@@@@@@" << cur->get_id() << "@@@@@@@@@@@@@@@@@@@@\n";
         cur->m_cb();
+        std::cout << "cc2@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
         cur->m_cb    = nullptr;
         cur->m_state = TERM;
     }
     catch (std::exception& e)
     {
+        std::cout << "e1@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
         cur->m_state = EXCEPT;
         ASSERT_M(false, "cb exception | " + e.what());
     }
     catch (...)
     {
+        std::cout << "e2@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
         cur->m_state = EXCEPT;
         ASSERT_M(false, "cb exception");
     }
+
+    std::cout << "22@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n";
+    LOG_FMT_DEBUG(logger, "@@@@@@@@@@ | id=%d", cur->get_id());
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->swap_out();
+
+    ASSERT_M(false, "Never reached!");
 }
 
-uint64_t Fiber::GetFiberId()
+uint32_t Fiber::GetFiberId()
 {
     if (t_fiber)
     {

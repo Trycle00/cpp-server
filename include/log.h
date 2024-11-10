@@ -88,7 +88,8 @@ struct LogAppenderConfig
     std::string file;
     bool operator==(const LogAppenderConfig& right) const
     {
-        return level == right.level && type == right.type && file == right.file;
+        // return level == right.level && type == right.type && file == right.file;
+        return type == right.type;
     }
     bool operator<(const LogAppenderConfig& right) const
     {
@@ -117,7 +118,7 @@ struct LogConfig
     }
     bool operator<(const LogConfig& right) const
     {
-        return level < right.level;
+        return name < right.name;
     }
 
     friend std::ostream& operator<<(std::ostream& out, const LogConfig& operand)

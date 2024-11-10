@@ -35,7 +35,7 @@ public:
     // 将协程切换到后台
     void swap_out();
 
-    uint64_t get_id() { return m_id; }
+    uint32_t get_id() { return m_id; }
 
 public:
     // 获取当前协程
@@ -51,18 +51,18 @@ public:
     // 协程主方法
     static void MainFunc();
     // 获取协程id
-    static uint64_t GetFiberId();
+    static uint32_t GetFiberId();
 
 private:
     Fiber();
 
 private:
-    uint64_t m_id       = 0;
+    uint32_t m_id       = 0;
     size_t m_stack_size = 0;
     State m_state       = INIT;
 
     ucontext_t m_ctx;
-    void* m_stack;
+    void* m_stack = nullptr;
 
     FiberCb m_cb;
 };

@@ -121,5 +121,6 @@
     "valarray": "cpp",
     "optional": "cpp",
     "ranges": "cpp"
-  }
+  },
+  "editor.fontSize": 12
 }

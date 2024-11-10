@@ -39,7 +39,7 @@ uint64_t GetThreadId()
     // uint32_t id = *static_cast<uint32_t*>(static_cast<void*>(&thread_id));
 }
 
-uint64_t GetFiberId()
+uint32_t GetFiberId()
 {
     return trycle::Fiber::GetFiberId();
 }
