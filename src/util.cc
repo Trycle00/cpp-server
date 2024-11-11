@@ -17,7 +17,7 @@ namespace trycle
 
 static Logger::ptr g_logger = GET_LOGGER("system");
 
-uint64_t GetThreadId()
+uint32_t GetThreadId()
 {
 #if _WIN32
     std::thread::id thread_id = std::this_thread::get_id();

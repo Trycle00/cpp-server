@@ -12,7 +12,7 @@ trycle::Mutex s_mutex;
 void test_fun1()
 {
     printf("xxxxxxx\n");
-    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "name=%s, this.name=%s, pid=%ld, this.pid=%d",
+    LOG_FMT_DEBUG(GET_ROOT_LOGGER, "name=%s, this.name=%s, pid=%d, this.pid=%d",
                   trycle::Thread::get_current_name().c_str(),
                   trycle::Thread::get_current_thread()->get_name().c_str(),
                   trycle::GetThreadId(),

@@ -11,6 +11,8 @@ namespace trycle
 // 协程类
 class Fiber : public std::enable_shared_from_this<Fiber>
 {
+
+public:
     enum State
     {
         INIT,
@@ -20,8 +22,6 @@ class Fiber : public std::enable_shared_from_this<Fiber>
         READY,
         EXCEPT,
     };
-
-public:
     typedef std::shared_ptr<Fiber> ptr;
     typedef std::function<void()> FiberCb;
 
@@ -36,6 +36,8 @@ public:
     void swap_out();
 
     uint32_t get_id() { return m_id; }
+    State get_state() { return m_state; }
+    void set_state(State state) { m_state = state; }
 
 public:
     // 获取当前协程

@@ -146,7 +146,7 @@ public:
     std::string& getFilename() { return m_filename; }
     int32_t getLine() const { return m_line; }
     // uint32_t getElapse() const { return m_elapse; }
-    uint64_t getThreadId() const { return m_threadId; }
+    uint32_t getThreadId() const { return m_threadId; }
     uint64_t getFiberId() const { return m_fiberId; }
     time_t getTime() const { return m_time; }
     std::string getContent() const { return m_content; }

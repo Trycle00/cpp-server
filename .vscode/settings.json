@@ -120,7 +120,8 @@
     "set": "cpp",
     "valarray": "cpp",
     "optional": "cpp",
-    "ranges": "cpp"
+    "ranges": "cpp",
+    "unordered_set": "cpp"
   },
   "editor.fontSize": 12
 }

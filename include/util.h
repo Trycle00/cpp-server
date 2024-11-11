@@ -8,7 +8,7 @@
 namespace trycle
 {
 
-uint64_t GetThreadId();
+uint32_t GetThreadId();
 
 uint32_t GetFiberId();
 
