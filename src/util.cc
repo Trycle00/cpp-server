@@ -95,4 +95,21 @@ std::string Backtrace(const int size, const int skip, const std::string& prefix)
     return ss.str();
 }
 
+std::vector<std::string> Split(const std::string& str, const std::string& delimiter)
+{
+    std::vector<std::string> vec;
+    std::string token;
+    size_t pos_start{}, pos_end, delimiter_len = delimiter.length();
+
+    while ((pos_end = str.find(delimiter, pos_start)) != std::string::npos)
+    {
+        token = str.substr(pos_start, pos_end - pos_start);
+        vec.push_back(token);
+        pos_start = pos_end + delimiter_len;
+    }
+    vec.push_back(str.substr(pos_start));
+
+    return vec;
+}
+
 } // namespace trycle

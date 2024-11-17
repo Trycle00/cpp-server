@@ -35,6 +35,11 @@ public:
     // 将协程切换到后台
     void swap_out();
 
+    void call();
+    void back();
+
+    bool isFinish() { return m_state == TERM || m_state == EXCEPT; }
+
     uint32_t get_id() { return m_id; }
     State get_state() { return m_state; }
     void set_state(State state) { m_state = state; }
@@ -44,6 +49,8 @@ public:
     static Fiber::ptr GetThis();
     // 设置当前协程
     static void SetThis(Fiber* ptr);
+    // 将协程切换到后台，并设置为HOLD状态
+    static void Yield();
     // 将协程切换到后台，并设置为HOLD状态
     static void YieldToHold();
     // 将协程切换到后台，并设置READY状态

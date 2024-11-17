@@ -1,7 +1,7 @@
 logs:
   - name: root
     level: DEBUG
-    formatter: "[%d] [%t-%F] [%p] [%f]%T%m%n"
+    formatter: "[%d] [%t-%F] [%p] [%f:%l] %m%n"
     appender:
       - type: 1
       - type: 2
@@ -9,7 +9,7 @@ logs:
         file: ./logs/sftest_root_log.txt
   - name: system
     level: DEBUG
-    formatter: "[%d] [%t-%F] [%p] [%f]%T%m%n"
+    formatter: "[%d] [%t-%F] [%p] [%f:%l] %m%n"
     appender:
       - type: 1
       - type: 2

@@ -18,6 +18,8 @@ static thread_local Fiber::ptr t_fiber_ptr;
 
 class Scheduler
 {
+    friend class Fiber;
+
 public:
     typedef std::shared_ptr<Scheduler> ptr;
     typedef Mutex MutexType;
@@ -72,14 +74,14 @@ protected:
     void set_to_this();
     void tickle();
     void run();
-    bool stopping();
+    bool isStop();
     void idle();
 
 private:
     template <typename FiberOrCb>
     bool schedule_without_lock(FiberOrCb fc, int thread = -1)
     {
-        bool need_tickle = !m_fibers.empty();
+        bool need_tickle = m_fibers.empty();
 
         FiberAndThread ft(fc, thread);
         if (ft.fiber || ft.cb)
@@ -94,7 +96,7 @@ private:
     {
         Fiber::ptr fiber;
         std::function<void()> cb;
-        int thread;
+        int thread = -1;
 
         FiberAndThread(Fiber::ptr ptr, const int t)
             : fiber(ptr),
@@ -129,19 +131,21 @@ private:
 
 protected:
     std::set<int> m_thread_ids;
-    int m_thread_count;
-    int m_active_thread_count;
-    int m_idle_thread_count;
-    bool m_stopping;
-    bool m_auto_stop;
-    int m_root_thread_id;
+    int m_thread_count{};
+    int m_active_thread_count{};
+    int m_idle_thread_count{};
+    // 执行停止状态
+    bool m_stopping = true;
+    // 是否自动停止
+    bool m_auto_stop = false;
+    int m_root_thread_id{};
 
 private:
     MutexType m_mutex;
     std::vector<Thread::ptr> m_threads;
     std::list<FiberAndThread> m_fibers;
     Fiber::ptr m_root_fiber;
-    std::string m_name;
+    std::string m_name{};
 };
 
 } // namespace trycle

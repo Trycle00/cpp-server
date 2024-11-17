@@ -6,6 +6,7 @@
 #include <typeinfo>
 
 #include "config.h"
+#include "util.h"
 
 namespace trycle
 {
@@ -37,7 +38,20 @@ class FilenameFormatItem : public LogFormatter::FormatItem
 public:
     void format(std::ostream& out, LogEvent::ptr event)
     {
-        out << event->getFilename();
+        std::vector<std::string> list = Split(event->getFilename(), "/");
+        std::stringstream ss;
+        for (int i = 0, size = list.size(), to = size - 2; i < size; i++)
+        {
+            if (i >= to)
+            {
+                ss << list.at(i);
+                if (i < size - 1)
+                {
+                    ss << '/';
+                }
+            }
+        }
+        out << ss.str();
     }
 };
 

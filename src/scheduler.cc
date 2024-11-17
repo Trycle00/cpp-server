@@ -13,16 +13,19 @@ static thread_local Fiber* t_fiber         = nullptr;
 static auto g_logger                       = GET_LOGGER("system");
 
 Scheduler::Scheduler(int thread_size, bool use_caller, const std::string& name)
-    : m_name(name)
+    : m_name(name),
+      m_thread_count(thread_size)
 {
     if (use_caller)
     {
-        --thread_size;
-        m_thread_count = thread_size;
-
+        // 实例化此类的线程作为master fiber
+        Fiber::GetThis();
+        // 线程池需要的线程减1
+        m_thread_count -= 1;
+        // 确保该线程只有一个高度器
         ASSERT(GetThis() == nullptr);
         set_to_this();
-
+        // 因为Scheduler::run()是实例化方法，需要用std::bind绑定调用者
         m_root_fiber.reset(new Fiber(std::bind(&Scheduler::run, this)));
 
         t_fiber          = m_root_fiber.get();
@@ -46,6 +49,7 @@ Scheduler::~Scheduler()
 
 void Scheduler::start()
 {
+    LOG_DEBUG(g_logger, "Scheduler::start");
     MutexType::Lock lock(&m_mutex);
     if (!m_stopping)
     {
@@ -63,29 +67,19 @@ void Scheduler::start()
 
 void Scheduler::stop()
 {
+    LOG_DEBUG(g_logger, "Scheduler::stop");
     m_auto_stop = true;
     if (m_root_fiber)
     {
-        if (m_thread_count == 0 && (m_root_fiber->get_state() == Fiber::INIT ||
-                                    m_root_fiber->get_state() == Fiber::TERM))
+        if (m_thread_count == 0 && (m_root_fiber->isFinish() || m_root_fiber->get_state() == Fiber::INIT))
         {
             LOG_FMT_INFO(g_logger, "schduler stop | name=%s", m_name.c_str());
             m_stopping = true;
-            if (stopping())
+            if (isStop())
             {
                 return;
             }
         }
-    }
-
-    bool exit_on_this_fiber = false;
-    if (m_root_thread_id == -1)
-    {
-        ASSERT(GetThis() == this);
-    }
-    else
-    {
-        ASSERT(GetThis() != this);
     }
 
     m_stopping = true;
@@ -94,9 +88,27 @@ void Scheduler::stop()
         tickle();
     }
 
-    if (stopping())
+    if (m_root_fiber)
     {
         tickle();
+        if (!isStop())
+        {
+            m_root_fiber->call();
+        }
+    }
+
+    std::vector<Thread::ptr> thrs;
+    {
+        MutexType::Lock lock(&m_mutex);
+        thrs.swap(m_threads);
+    }
+
+    { // join所有子线程
+        for (const auto& item : thrs)
+        {
+            item->join();
+        }
+        m_threads.clear();
     }
 }
 
@@ -116,10 +128,12 @@ Fiber* Scheduler::GetMainFiber()
 
 void Scheduler::tickle()
 {
+    LOG_DEBUG(g_logger, "Scheduler::tickle");
 }
 
 void Scheduler::run()
 {
+    LOG_DEBUG(g_logger, "Scheduler::run");
     set_to_this();
     if (GetThreadId() != m_root_thread_id)
     {
@@ -135,6 +149,7 @@ void Scheduler::run()
         ft.reset();
 
         bool tickle_me = false;
+        bool is_active = false;
         {
             MutexType::Lock lock(&m_mutex);
             for (auto it = m_fibers.begin(); it != m_fibers.end(); ++it)
@@ -153,6 +168,8 @@ void Scheduler::run()
 
                 ft = *it;
                 m_fibers.erase(it);
+                ++m_active_thread_count;
+                is_active = true;
                 break;
             }
         }
@@ -162,9 +179,8 @@ void Scheduler::run()
             tickle();
         }
 
-        if (ft.fiber && ft.fiber->get_state() != Fiber::TERM)
+        if (ft.fiber && !ft.fiber->isFinish())
         {
-            ++m_active_thread_count;
             ft.fiber->swap_in();
             --m_active_thread_count;
 
@@ -172,11 +188,11 @@ void Scheduler::run()
             {
                 schedule(ft.fiber);
             }
-            else if (ft.fiber->get_state() != Fiber::EXCEPT &&
-                     ft.fiber->get_state() != Fiber::TERM)
+            else if (!ft.fiber->isFinish())
             {
                 ft.fiber->set_state(Fiber::HOLD);
             }
+            ft.reset();
         }
         else if (ft.cb)
         {
@@ -189,7 +205,7 @@ void Scheduler::run()
                 cb_fiber.reset(new Fiber(ft.cb));
             }
 
-            ++m_active_thread_count;
+            ft.reset();
             cb_fiber->swap_in();
             --m_active_thread_count;
 
@@ -198,42 +214,55 @@ void Scheduler::run()
                 schedule(cb_fiber);
                 cb_fiber.reset();
             }
-            else if (cb_fiber->get_state() == Fiber::EXCEPT || cb_fiber->get_state() == Fiber::TERM)
+            else if (cb_fiber->isFinish())
             {
                 cb_fiber->reset(nullptr);
             }
             else
             {
-                ft.fiber->set_state(Fiber::HOLD);
+                cb_fiber->set_state(Fiber::HOLD);
                 cb_fiber.reset();
             }
         }
         else
         {
-            if (idle_fiber->get_state() == Fiber::TERM)
+            if (is_active)
             {
+                --m_active_thread_count;
+                continue;
+            }
+
+            if (idle_fiber->isFinish())
+            {
+                LOG_INFO(g_logger, "idle fiber finish");
                 break;
             }
 
             ++m_idle_thread_count;
             idle_fiber->swap_in();
-            if (cb_fiber->get_state() != Fiber::EXCEPT || cb_fiber->get_state() != Fiber::TERM)
+            --m_idle_thread_count;
+            if (!idle_fiber->isFinish())
             {
                 idle_fiber->set_state(Fiber::HOLD);
             }
-            --m_idle_thread_count;
         }
     }
 }
 
-bool Scheduler::stopping()
+bool Scheduler::isStop()
 {
-    // TODO
-    return true;
+    // LOG_DEBUG(g_logger, "Scheduler::isStop()");
+    MutexType::Lock lock(&m_mutex);
+    return m_auto_stop && m_stopping && m_active_thread_count == 0 && m_fibers.empty();
 }
 
 void Scheduler::idle()
 {
+    LOG_DEBUG(g_logger, "Scheduler::idle");
+    while (!isStop())
+    {
+        Fiber::YieldToHold();
+    }
 }
 
 } // namespace trycle

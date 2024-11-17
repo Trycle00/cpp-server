@@ -6,6 +6,8 @@
 #include "log.h"
 #include "util.h"
 
+#define BACKTRACE() trycle::Backtrace(20, 1, "    ")
+
 #define ASSERT(x)                                              \
     if (!(x))                                                  \
     {                                                          \
