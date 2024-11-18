@@ -72,10 +72,10 @@ public:
 
 protected:
     void set_to_this();
-    void tickle();
+    virtual void tickle();
     void run();
-    bool isStop();
-    void idle();
+    virtual bool isStop();
+    virtual void idle();
 
 private:
     template <typename FiberOrCb>
