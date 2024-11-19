@@ -94,7 +94,7 @@ bool IOManager::addEvent(int fd, EventType event, std::function<void()> callback
     FdContext::MutexType::Lock lock3(&fd_ctx->m_mutex);
     // 检查要监听的事件是否已经存在
     int is_same = fd_ctx->m_events & event;
-    if (!is_same)
+    if (is_same)
     {
         LOG_FMT_ERROR(g_logger, "IOManager::addEvent | exist same event | fd=%d, event=%d, fd_ctx.event=%d", (int)fd, event, fd_ctx->m_events);
         ASSERT(false);
@@ -247,6 +247,7 @@ bool IOManager::cancelAllEvent(int fd)
     if (fd_ctx->m_events & EventType::WRITE)
     {
         fd_ctx->triggerEventContext(EventType::WRITE);
+        --m_pending_event_count;
     }
 
     fd_ctx->m_events = EventType::NONE;
@@ -339,7 +340,7 @@ void IOManager::idle()
             }
             if (event.events & EPOLLOUT)
             {
-                real_events != EventType::WRITE;
+                real_events |= EventType::WRITE;
             }
 
             // fd 中指定的事件已经被触发并处理，不做操作了
@@ -376,13 +377,13 @@ void IOManager::idle()
                 --m_pending_event_count;
             }
         }
-    }
 
-    // 让出当前线程的执行权，给调度器执行排队等待的协程
-    Fiber::ptr cur_fiber = Fiber::GetThis();
-    Fiber* raw_ptr       = cur_fiber.get();
-    cur_fiber.reset();
-    raw_ptr->swap_out();
+        // 让出当前线程的执行权，给调度器执行排队等待的协程
+        Fiber::ptr cur_fiber = Fiber::GetThis();
+        Fiber* raw_ptr       = cur_fiber.get();
+        cur_fiber.reset();
+        raw_ptr->swap_out();
+    }
 }
 
 /**

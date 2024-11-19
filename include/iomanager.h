@@ -14,9 +14,9 @@ class IOManager : public Scheduler
 public:
     enum EventType
     {
-        NONE  = 0x1,
-        READ  = 0x2,
-        WRITE = 0x4
+        NONE  = 0x0,
+        READ  = 0x1, // EPOLLIN
+        WRITE = 0x4  // EPOLLOUT
     };
 
     struct FdContext
