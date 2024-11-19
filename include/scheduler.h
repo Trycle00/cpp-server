@@ -76,6 +76,7 @@ protected:
     void run();
     virtual bool isStop();
     virtual void idle();
+    bool hasIdleThreads() { return m_idle_thread_count > 0; }
 
 private:
     template <typename FiberOrCb>
@@ -140,7 +141,7 @@ protected:
     bool m_auto_stop = false;
     int m_root_thread_id{};
 
-private:
+protected:
     MutexType m_mutex;
     std::vector<Thread::ptr> m_threads;
     std::list<FiberAndThread> m_fibers;

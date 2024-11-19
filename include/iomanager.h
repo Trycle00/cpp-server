@@ -22,7 +22,7 @@ public:
     struct FdContext
     {
         typedef std::shared_ptr<FdContext> ptr;
-        typedef RWMutex MutexType;
+        typedef Mutex MutexType;
 
         struct EventContext
         {
@@ -46,7 +46,7 @@ public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex MutexType;
 
-    IOManager(size_t thread_size, bool use_caller = false, const std::string& name = "");
+    IOManager(size_t thread_size = 1, bool use_caller = false, const std::string& name = "");
     ~IOManager();
 
     bool addEvent(int fd, EventType event, std::function<void()> callback = nullptr);
@@ -68,9 +68,9 @@ private:
     MutexType m_mutex;
     int m_epoll_fd = 0;                            // epoll文件标识符
     int m_tickle_fds[2]{};                         // 主线程给子线程发送消息的管道
-    std::atomic_size_t m_pending_event_count;      // 等待执行的事件数量
+    std::atomic_size_t m_pending_event_count{};    // 等待执行的事件数量
     std::vector<FdContext::ptr> m_fd_context_list; // FdContext的对象池，下标对应fd id
-}
+};
 
 } // namespace trycle
 
