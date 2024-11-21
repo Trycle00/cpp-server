@@ -230,7 +230,8 @@ void Fiber::MainFunc()
     catch (std::exception& e)
     {
         cur->m_state = EXCEPT;
-        ASSERT_M(false, "cb exception | " + e.what());
+        std::cout << "e.what(): " << e.what() << std::endl;
+        ASSERT_M(false, ("cb exception | " + e.what()));
     }
     catch (...)
     {

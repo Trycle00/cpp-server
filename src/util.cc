@@ -6,6 +6,7 @@
 #if _WIN32
 #else
 #include <sys/syscall.h>
+#include <sys/time.h>
 #include <unistd.h>
 #endif
 
@@ -110,6 +111,20 @@ std::vector<std::string> Split(const std::string& str, const std::string& delimi
     vec.push_back(str.substr(pos_start));
 
     return vec;
+}
+
+uint64_t GetCurrentMs()
+{
+    timeval tval;
+    gettimeofday(&tval, nullptr);
+    return tval.tv_sec * 1000ul + tval.tv_usec / 1000;
+}
+
+uint64_t GetCurrentUs()
+{
+    timeval tval;
+    gettimeofday(&tval, nullptr);
+    return tval.tv_sec * 1000ul * 1000ul + tval.tv_usec;
 }
 
 } // namespace trycle

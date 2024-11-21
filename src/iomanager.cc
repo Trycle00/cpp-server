@@ -66,6 +66,11 @@ void IOManager::contextListResize(int size)
     }
 }
 
+void IOManager::onTimerInsertedAtFirst()
+{
+    tickle();
+}
+
 bool IOManager::addEvent(int fd, EventType event, std::function<void()> callback)
 {
     /**
@@ -272,7 +277,17 @@ void IOManager::tickle()
 
 bool IOManager::isStop()
 {
-    return Scheduler::isStop() && m_pending_event_count == 0;
+    return m_pending_event_count == 0 &&
+           !hasTimer() &&
+           Scheduler::isStop();
+}
+
+bool IOManager::isStop(uint64_t& next_timeout)
+{
+    next_timeout = getNextTimer();
+    return next_timeout == ~0ull &&
+           m_pending_event_count == 0 &&
+           Scheduler::isStop();
 }
 
 void IOManager::idle()
@@ -282,17 +297,23 @@ void IOManager::idle()
                                                { delete[] events; });
     while (true)
     {
-        if (isStop())
+        uint64_t next_timeout = 0;
+        if (isStop(next_timeout))
         {
             LOG_FMT_DEBUG(g_logger, "IOManager::idle is stop and exist | %s", m_name.c_str());
             break;
         }
-        static int EPOLL_TIME_OUT = 1000;
-        int rt                    = 0;
+        static const int EPOLL_TIME_OUT = 1000;
+        if (next_timeout == ~0ull || EPOLL_TIME_OUT < next_timeout)
+        {
+            next_timeout = EPOLL_TIME_OUT;
+        }
+
+        int rt = 0;
         do
         {
             // 阻塞等待 epoll_wait 返回结果，若超时中断，下镒继续重试
-            rt = ::epoll_wait(m_epoll_fd, ep_events, 64, EPOLL_TIME_OUT);
+            rt = ::epoll_wait(m_epoll_fd, ep_events, 64, next_timeout);
             if (rt < 0 && errno == EINTR)
             {
                 // continue
@@ -302,6 +323,15 @@ void IOManager::idle()
                 break;
             }
         } while (true);
+
+        std::vector<std::function<void()>> fns;
+        listExpiredTimers(fns);
+        if (!fns.empty())
+        {
+            // LOG_FMT_DEBUG(g_logger, "fns size=%d................", (int)fns.size());
+            schedule(fns.begin(), fns.end(), -1);
+            fns.clear();
+        }
 
         // 遍历被 ep_events 处理被触发的 fd
         for (int i = 0; i < rt; i++)

@@ -18,6 +18,9 @@ std::string Backtrace(const int size, const int skip, const std::string& prefix)
 
 std::vector<std::string> Split(const std::string& str, const std::string& delimiter);
 
+uint64_t GetCurrentMs();
+uint64_t GetCurrentUs();
+
 } // namespace trycle
 
 #endif // TRY_UTIL_H

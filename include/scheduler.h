@@ -53,10 +53,11 @@ public:
         bool need_tickle = false;
         {
             MutexType::Lock lock(&m_mutex);
-            while (begin++ != end)
+            while (begin != end)
             {
                 auto ft     = &*begin;
                 need_tickle = schedule_without_lock(ft, thread) || need_tickle;
+                ++begin;
             }
         }
         if (need_tickle)
@@ -109,14 +110,14 @@ private:
             fiber.swap(*ptr);
         }
 
-        FiberAndThread(std::function<void()> cb, const int t)
-            : cb(cb),
+        FiberAndThread(std::function<void()> fn, const int t)
+            : cb(fn),
               thread(t) {}
 
-        FiberAndThread(std::function<void()>* cb, const int t)
-            : thread(t)
+        FiberAndThread(std::function<void()>* fn, const int t)
+            : cb(std::move(*fn)),
+              thread(t)
         {
-            cb->swap(*cb);
         }
 
         FiberAndThread()

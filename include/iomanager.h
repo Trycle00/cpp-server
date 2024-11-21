@@ -4,11 +4,12 @@
 #include <functional>
 
 #include "scheduler.h"
+#include "timer.h"
 
 namespace trycle
 {
 
-class IOManager : public Scheduler
+class IOManager : public Scheduler, public TimerManager
 {
 
 public:
@@ -60,9 +61,12 @@ public:
 protected:
     void tickle() override;
     bool isStop() override;
+    bool isStop(uint64_t& next_timeout);
     void idle() override;
 
     void contextListResize(int size);
+
+    void onTimerInsertedAtFirst();
 
 private:
     MutexType m_mutex;
