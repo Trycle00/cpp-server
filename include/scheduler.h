@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "fiber.h"
+#include "hook.h"
 #include "thread.h"
 
 namespace trycle
@@ -36,6 +37,7 @@ public:
     template <typename FiberOrCb>
     void schedule(FiberOrCb fc, int thread = -1)
     {
+
         bool need_tickle = false;
         {
             MutexType::Lock lock(&m_mutex);

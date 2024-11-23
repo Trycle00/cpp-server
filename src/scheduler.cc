@@ -134,6 +134,7 @@ void Scheduler::tickle()
 void Scheduler::run()
 {
     LOG_DEBUG(g_logger, "Scheduler::run");
+    set_enable_hook(true);
     set_to_this();
     if (GetThreadId() != m_root_thread_id)
     {

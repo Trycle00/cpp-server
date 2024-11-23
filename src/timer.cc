@@ -200,12 +200,15 @@ void TimerManager::listExpiredTimers(std::vector<std::function<void()>>& fns)
 
     Timer::ptr now_timer(new Timer(now_ms));
     // 如果系统时间被回拨，直接认为所有任务都已经超时，需要执行
+    // 如果没有，则通过 lower_bound 找出第一个大于或等于 now_timer 定时器的迭代器
     auto it = rolllover ? m_timers.end() : m_timers.lower_bound(now_timer);
-    while (it != m_timers.end() && it->get()->m_next != now_ms)
+    // 如果不是结束位，并且，仍然有相同的时间，则定位到下一个定时器
+    while (it != m_timers.end() && it->get()->m_next == now_ms)
     {
         ++it;
     }
 
+    // 取出所有超时的代码器，取值范围[n,m)
     expireds.insert(expireds.begin(), m_timers.begin(), it);
     m_timers.erase(m_timers.begin(), it);
     fns.reserve(expireds.size());
@@ -213,8 +216,10 @@ void TimerManager::listExpiredTimers(std::vector<std::function<void()>>& fns)
     for (auto& it : expireds)
     {
         fns.push_back(it->m_fn);
+        // 处理周期循环的定时器
         if (it->m_cyclic)
         {
+            // 若是，定时器指定下次执行时间后，添加到定时器队列
             it->m_next = now_ms + it->m_ms;
             m_timers.insert(it);
         }
