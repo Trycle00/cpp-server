@@ -71,6 +71,9 @@ void IOManager::onTimerInsertedAtFirst()
     tickle();
 }
 
+/**
+ * return 0 as success
+ */
 bool IOManager::addEvent(int fd, EventType event, std::function<void()> callback)
 {
     /**
