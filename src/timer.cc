@@ -165,14 +165,15 @@ static void OnTimer(std::weak_ptr<void> weak_cond, std::function<void()> fn)
     }
 }
 
-void TimerManager::addConditionTimer(uint64_t ms, std::function<void()> fn,
-                                     std::weak_ptr<void> weak_cond, bool cyclic)
+Timer::ptr TimerManager::addConditionTimer(uint64_t ms, std::function<void()> fn,
+                                           std::weak_ptr<void> weak_cond, bool cyclic)
 {
     Timer::ptr timer(new Timer(ms, cyclic, fn, this));
     {
         MutexType::WriteLock lock(&m_mutex);
         addTimer(ms, std::bind(&OnTimer, weak_cond, fn), cyclic);
     }
+    return timer;
 }
 
 void TimerManager::listExpiredTimers(std::vector<std::function<void()>>& fns)

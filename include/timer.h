@@ -55,7 +55,7 @@ public:
     Timer::ptr addTimer(uint64_t ms, std::function<void()> fn, bool cyclic);
     bool addTimer(Timer::ptr val, MutexType::WriteLock& lock);
 
-    void addConditionTimer(uint64_t ms, std::function<void()> fn, std::weak_ptr<void> weak_cond, bool cyclic);
+    Timer::ptr addConditionTimer(uint64_t ms, std::function<void()> fn, std::weak_ptr<void> weak_cond, bool cyclic = false);
     uint64_t getNextTimer();
     bool hasTimer();
 

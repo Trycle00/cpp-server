@@ -2,6 +2,7 @@
 #define TRY_CONFIG_H
 
 #include <algorithm>
+#include <atomic>
 #include <boost/lexical_cast.hpp>
 #include <functional>
 #include <iostream>
@@ -382,6 +383,14 @@ public:
             throw std::bad_cast();
         }
         return false;
+    }
+
+    int add_listener(const on_change_cb cb)
+    {
+        static std::atomic<uint32_t> key_gener{0};
+        const int key = ++key_gener;
+        add_listener(key, cb);
+        return key;
     }
 
     void add_listener(const int key, const on_change_cb cb)

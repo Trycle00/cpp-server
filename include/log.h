@@ -58,6 +58,8 @@
 namespace trycle
 {
 
+using MutexType = Mutex;
+
 // class Mutex;
 
 // 日志级别
@@ -169,7 +171,6 @@ class LogFormatter
 
 public:
     typedef std::shared_ptr<LogFormatter> ptr;
-    typedef SpinMutex MutexType;
 
     class FormatItem
     {
@@ -196,7 +197,6 @@ class LogAppender
 
 public:
     typedef std::shared_ptr<LogAppender> ptr;
-    typedef SpinMutex MutexType;
 
     virtual ~LogAppender() {}
 
@@ -221,7 +221,7 @@ class Logger
 
 public:
     typedef std::shared_ptr<Logger> ptr;
-    typedef SpinMutex MutexType;
+    typedef Mutex MutexType;
 
     Logger(const std::string& name);
     Logger(const std::string& name, LogLevel::Level level, LogFormatter::ptr log_formatter);
@@ -296,7 +296,6 @@ class FileAppender : public LogAppender
 {
 public:
     typedef std::shared_ptr<FileAppender> ptr;
-    typedef SpinMutex MutexType;
 
     FileAppender(const std::string& fileName);
 
@@ -316,7 +315,6 @@ class __LoggerManager
 {
 public:
     typedef std::shared_ptr<__LoggerManager> ptr;
-    typedef SpinMutex MutexType;
 
     __LoggerManager();
 

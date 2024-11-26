@@ -35,11 +35,11 @@ extern "C"
     typedef int (*socket_fun)(int domain, int type, int protocol);
     extern socket_fun socket_f;
 
-    typedef int (*bind_fun)(int sockfd, const struct sockaddr* addr, socklen_t addrlen);
-    extern bind_fun bind_f;
+    // typedef int (*bind_fun)(int sockfd, const struct sockaddr* addr, socklen_t addrlen);
+    // extern bind_fun bind_f;
 
-    typedef int (*listen_fun)(int sockfd, int backlog);
-    extern listen_fun listen_f;
+    // typedef int (*listen_fun)(int sockfd, int backlog);
+    // extern listen_fun listen_f;
 
     typedef int (*connect_fun)(int sockfd, const struct sockaddr* addr, socklen_t addrlen);
     extern connect_fun connect_f;
@@ -83,11 +83,20 @@ extern "C"
     typedef int (*close_fun)(int fd);
     extern close_fun close_f;
 
-    typedef int (*open_fun)(const char* pathname, int flags);
-    extern open_fun open_f;
+    // typedef int (*open_fun)(const char* pathname, int flags);
+    // extern open_fun open_f;
 
     typedef int (*fcntl_fun)(int fd, int cmd, ... /* arg */);
     extern fcntl_fun fcntl_f;
+
+    typedef int (*ioctl_fun)(int fd, unsigned long request, ...);
+    extern ioctl_fun ioctl_f;
+
+    typedef int (*getsockopt_fun)(int sockfd, int level, int optname, void* optval, socklen_t* optlen);
+    extern getsockopt_fun getsockopt_f;
+
+    typedef int (*setsockopt_fun)(int sockfd, int level, int optname, const void* optval, socklen_t optlen);
+    extern setsockopt_fun setsockopt_f;
 }
 
 #endif // TRY_HOOK_H

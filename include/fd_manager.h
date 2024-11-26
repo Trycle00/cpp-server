@@ -22,10 +22,6 @@ public:
 
     bool init();
 
-    bool isClosed() { return isClosed; }
-    bool setClose(bool closed) { m_isClosed = closed; };
-    bool close();
-
     void setTimeout(int type, uint64_t val);
     uint64_t getTimeout(int type);
 
@@ -43,6 +39,8 @@ public:
     // void getRecvTimeout(uint64_t recvTimeout) { m_recvTimeout = recvTimeout; }
     // uint64_t getSendTimeout() { return m_sendTimeout; }
     // void getSendTimeout(uint64_t sendTimeout) { m_sendTimeout = sendTimeout; }
+    bool isClosed() { return m_isClosed; }
+    void setClose(bool closed) { m_isClosed = closed; };
 
 private:
     bool m_isInit : 1;
@@ -61,6 +59,9 @@ class FdManager
 public:
     typedef std::shared_ptr<FdManager> ptr;
     typedef RWMutex MutexType;
+
+    FdManager();
+    ~FdManager();
 
     FdCtx::ptr get(int fd, bool auto_create = false);
     void del(int fd);

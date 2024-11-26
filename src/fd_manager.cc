@@ -41,7 +41,7 @@ bool FdCtx::init()
     if (fstat(m_fd, &fd_stat) == -1)
     {
         // 全非，不达到条件
-        m_isInit = false;
+        m_isInit   = false;
         m_isSocket = false;
     }
     else
@@ -68,8 +68,8 @@ bool FdCtx::init()
     }
 
     m_isUserNoBlock = false;
-    m_recvTimeout = -1;
-    m_sendTimeout = -1;
+    m_recvTimeout   = -1;
+    m_sendTimeout   = -1;
     return m_isInit;
 }
 
@@ -107,7 +107,11 @@ FdManager::FdManager()
     m_fd_ctx_list.resize(64);
 }
 
-FdCtx::ptr FdManager::get(int fd, bool auto_create = false)
+FdManager::~FdManager()
+{
+}
+
+FdCtx::ptr FdManager::get(int fd, bool auto_create)
 {
     if (fd == -1)
     {
